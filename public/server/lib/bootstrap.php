@@ -50,6 +50,9 @@ function db(): PDO {
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     PDO::ATTR_EMULATE_PREPARES => false,
   ]);
+  // Match the tables' collation so comparisons with typed values never mix collations
+  // (Hostinger's MariaDB defaults utf8mb4 connections to utf8mb4_general_ci).
+  $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
   $pdo->exec("SET time_zone = '+00:00'");
   return $pdo;
 }
