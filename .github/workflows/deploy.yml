@@ -1,0 +1,60 @@
+# Builds the app and publishes the ready-to-serve files to the "deploy" branch.
+# Hostinger (hPanel → Advanced → GIT) pulls the "deploy" branch into the website folder.
+name: Build and publish
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Check PHP syntax
+        run: |
+          for f in $(find public -name '*.php'); do php -l "$f" > /dev/null || exit 1; done
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish to the deploy branch
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin deploy > /dev/null; then
+            git fetch --depth=1 origin deploy
+            git worktree add ../site origin/deploy
+            git -C ../site checkout -B deploy
+          else
+            git worktree add --detach ../site
+            git -C ../site checkout --orphan deploy
+            git -C ../site rm -rf . > /dev/null
+          fi
+          rsync -a --delete --exclude .git dist/ ../site/
+          cd ../site
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing changed."
+            exit 0
+          fi
+          git commit -m "Build ${GITHUB_SHA::7}"
+          git push origin deploy

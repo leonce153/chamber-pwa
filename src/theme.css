@@ -1,0 +1,111 @@
+/**
+ * ⚠️ THEME CONFIGURATION — Tailwind v4
+ * Design System v2 - Dark Theme
+ */
+@theme {
+	/* Colors - Dark Theme */
+	--color-background: #0E1014;
+	--color-surface: #13161B;
+	--color-surface-elevated: #171A21;
+	--color-surface-raised: #1D2029;
+	--color-border: #22262E;
+	--color-border-strong: #2E333D;
+
+	/* Primary - Indigo accent */
+	--color-primary: #5B5FE8;
+	--color-primary-hover: #6E72F0;
+	--color-primary-foreground: #ffffff;
+
+	/* Text hierarchy */
+	--color-text: #ECEEF2;
+	--color-text-secondary: #A7ADB9;
+	--color-text-tertiary: #8E95A3;
+	--color-muted: #A7ADB9;
+	--color-muted-foreground: #8E95A3;
+
+	/* Accent colors */
+	--color-accent: #A9ADFF;
+	--color-accent-foreground: #ffffff;
+	--color-link: #A9ADFF;
+
+	/* Semantic colors */
+	--color-success: #1F8A5B;
+	--color-success-foreground: #ffffff;
+	--color-destructive: #DC2626;
+	--color-destructive-foreground: #ffffff;
+	--color-warning: #D97706;
+	--color-warning-foreground: #ffffff;
+	--color-secondary: #5B5FE8;
+	--color-secondary-foreground: #ffffff;
+
+	/* Input and interactive */
+	--color-input: #1D2029;
+	--color-ring: #5B5FE8;
+
+	/* Card backgrounds */
+	--color-card: #171A21;
+	--color-card-elevated: #1D2029;
+
+	/* Status pill colors */
+	--color-pill-draft-bg: #262A33;
+	--color-pill-draft-text: #C3C8D2;
+	--color-pill-draft-dot: #8E95A3;
+	--color-pill-live-bg: #1F8A5B20;
+	--color-pill-live-text: #34D399;
+	--color-pill-live-dot: #1F8A5B;
+
+	/* Icon tiles - brighter for contrast */
+	--color-icon-tile-bg: #262A45;
+	--color-icon-tile-text: #C9CBFF;
+	--color-icon-primary: #5B5FE880;
+	--color-icon-success: #1F8A5B80;
+	--color-icon-warning: #D9770680;
+	--color-icon-info: #3B82F680;
+
+	/* Radius - updated */
+	--radius-sm: 0.5rem;
+	--radius-md: 0.625rem;
+	--radius-lg: 1rem;
+	--radius-xl: 1rem;
+	--radius-2xl: 1rem;
+	--radius-card: 1rem;
+	--radius-button: 0.625rem;
+	--radius-input: 0.625rem;
+
+	/* Spacing */
+	--spacing-card: 1.5rem;
+	--spacing-card-gap: 1.5rem;
+
+	/* Fonts */
+	--font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+	--font-sans: 'DM Sans', system-ui, sans-serif;
+}
+
+/* Animations */
+@keyframes slide-up {
+	from {
+		transform: translateY(100%);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
+
+.animate-slide-up {
+	animation: slide-up 0.3s ease-out forwards;
+}
+
+/* Safe area padding for PWA */
+.pb-safe {
+	padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+}
+
+.safe-area-top {
+	padding-top: env(safe-area-inset-top, 0);
+}
+
+.h-safe-top {
+	height: env(safe-area-inset-top, 0);
+}
