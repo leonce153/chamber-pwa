@@ -124,7 +124,7 @@ export default function Team() {
 
   return (
     <AppLayout>
-      <div data-ev-id="team_page" className="p-8 max-w-4xl">
+      <div data-ev-id="team_page" className="p-4 sm:p-8 max-w-4xl">
         <div data-ev-id="ev_5d7b223113" className="mb-8 flex items-start justify-between gap-4 flex-wrap">
           <div data-ev-id="team_heading">
             <h1 data-ev-id="ev_d4c3820312" className="text-[28px] font-display font-bold text-text tracking-tight">Team</h1>

@@ -236,9 +236,9 @@ export default function Notify() {
 
   return (
     <AppLayout>
-      <div data-ev-id="notify_page" className="p-8">
+      <div data-ev-id="notify_page" className="p-4 sm:p-8">
         {/* Header */}
-        <div data-ev-id="ev_2338e7eaca" className="flex items-center justify-between mb-8">
+        <div data-ev-id="ev_2338e7eaca" className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div data-ev-id="ev_984a486b60">
             <h1 data-ev-id="ev_92b31d6289" className="text-[28px] font-display font-bold text-text tracking-tight">Notifications</h1>
             <p data-ev-id="ev_134a189418" className="text-text-secondary mt-1">Send push notifications to your subscribers</p>
@@ -253,7 +253,7 @@ export default function Notify() {
         </div>
 
         {/* Stats */}
-        <div data-ev-id="ev_bb50ea5ba9" className="grid grid-cols-3 gap-6 mb-8">
+        <div data-ev-id="ev_bb50ea5ba9" className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
           <div data-ev-id="ev_9eb5c43379" className="bg-card border border-border rounded-[16px] p-6">
             <div data-ev-id="ev_96a9545136" className="flex items-center gap-3 mb-2">
               <Bell className="w-5 h-5 text-primary" />
@@ -338,7 +338,7 @@ export default function Notify() {
         {/* Compose Modal */}
         {showComposeModal &&
         <div data-ev-id="ev_ed92d513f8" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div data-ev-id="ev_9430cd3310" className="bg-card border border-border rounded-[16px] w-full max-w-lg p-7">
+            <div data-ev-id="ev_9430cd3310" className="bg-card border border-border rounded-[16px] w-full max-w-lg p-5 sm:p-7">
               <div data-ev-id="ev_549dff7092" className="flex items-center justify-between mb-5">
                 <h2 data-ev-id="ev_713f03d2a1" className="text-[22px] font-display font-bold text-text tracking-tight">
                   Compose notification

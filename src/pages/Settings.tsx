@@ -83,9 +83,9 @@ export default function Settings() {
 
   return (
     <AppLayout>
-      <div data-ev-id="settings_page" className="p-8 max-w-4xl">
+      <div data-ev-id="settings_page" className="p-4 sm:p-8 max-w-4xl">
         {/* Header */}
-        <div data-ev-id="ev_e2aeedac1a" className="flex items-center justify-between mb-8">
+        <div data-ev-id="ev_e2aeedac1a" className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div data-ev-id="ev_15878221cf">
             <h1 data-ev-id="ev_53dcb41e4a" className="text-[28px] font-display font-bold text-text tracking-tight">Settings</h1>
             <p data-ev-id="ev_b7f2b71b36" className="text-text-secondary mt-1">Manage your app configuration</p>
@@ -116,7 +116,7 @@ export default function Settings() {
         }
 
         {/* Quick Links */}
-        <div data-ev-id="ev_d9e21658e2" className="grid grid-cols-2 gap-4 mb-8">
+        <div data-ev-id="ev_d9e21658e2" className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           <Link data-ev-id="ev_3d7421c9a0"
           to="/admin/team"
           className="bg-card border border-border rounded-[16px] p-5 flex items-center gap-4 hover:bg-surface-elevated transition-colors">

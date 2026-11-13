@@ -162,9 +162,9 @@ export default function Build() {
     <AppLayout>
       <div data-ev-id="build_page" className="flex h-full">
         {/* Features Panel */}
-        <div data-ev-id="ev_1e21571f5b" className="flex-1 p-8 overflow-auto">
+        <div data-ev-id="ev_1e21571f5b" className="flex-1 p-4 sm:p-8 overflow-auto">
           {/* Header */}
-          <div data-ev-id="ev_c6142dafbf" className="flex items-center justify-between mb-8">
+          <div data-ev-id="ev_c6142dafbf" className="flex flex-wrap items-center justify-between gap-4 mb-8">
             <div data-ev-id="ev_615ccfdb30">
               <h1 data-ev-id="ev_8b36438f00" className="text-[28px] font-display font-bold text-text tracking-tight">Build</h1>
               <p data-ev-id="ev_64f7ac545f" className="text-text-secondary mt-1">Add features and customize your app</p>
@@ -259,7 +259,7 @@ export default function Build() {
         </div>
 
         {/* Phone Preview */}
-        <div data-ev-id="ev_3d74767357" className="w-[400px] bg-surface border-l border-border p-8 flex items-center justify-center">
+        <div data-ev-id="ev_3d74767357" className="hidden lg:flex w-[400px] bg-surface border-l border-border p-8 items-center justify-center">
           {app && <PhonePreview app={app} features={features} />}
         </div>
 
@@ -314,7 +314,7 @@ export default function Build() {
               </div>
 
               <div data-ev-id="ev_c65b563736" className="flex-1 overflow-auto p-5">
-                <div data-ev-id="ev_632d961252" className="grid grid-cols-2 gap-3">
+                <div data-ev-id="ev_632d961252" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {filteredFeatures.map((feature) => {
                   const IconComponent = iconMap[feature.icon] || Layers;
                   return (
@@ -343,7 +343,7 @@ export default function Build() {
         {/* Design Panel Modal */}
         {showDesignPanel &&
         <div data-ev-id="ev_b517a2a698" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div data-ev-id="ev_21d3d6f0de" className="bg-card border border-border rounded-[16px] w-full max-w-md p-7">
+            <div data-ev-id="ev_21d3d6f0de" className="bg-card border border-border rounded-[16px] w-full max-w-md p-5 sm:p-7">
               <div data-ev-id="ev_b06976c777" className="flex items-center justify-between mb-5">
                 <h2 data-ev-id="ev_b34bca3b42" className="text-[22px] font-display font-bold text-text tracking-tight">Design</h2>
                 <button data-ev-id="ev_313ea9cb3e"

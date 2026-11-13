@@ -111,9 +111,9 @@ export default function Home() {
 
   return (
     <AppLayout>
-      <div data-ev-id="home_page" className="p-8">
+      <div data-ev-id="home_page" className="p-4 sm:p-8">
         {/* Header */}
-        <div data-ev-id="header" className="flex items-center justify-between mb-8">
+        <div data-ev-id="header" className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div data-ev-id="ev_2327607089">
             <h1 data-ev-id="greeting" className="text-[28px] font-display font-bold text-text tracking-tight">
               {greeting}, {firstName}
@@ -133,7 +133,7 @@ export default function Home() {
         </div>
 
         {/* Stats Row */}
-        <div data-ev-id="stats_row" className="grid grid-cols-3 gap-6 mb-8">
+        <div data-ev-id="stats_row" className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
           <div data-ev-id="stat_subscribers" className="bg-card border border-border rounded-[16px] p-6">
             <div data-ev-id="ev_bb268895fb" className="flex items-center gap-3 mb-2">
               <div data-ev-id="ev_87174a79ef" className="w-10 h-10 rounded-[10px] bg-primary/10 flex items-center justify-center">
@@ -167,7 +167,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div data-ev-id="ev_ab2e69c6a6" className="grid grid-cols-2 gap-6">
+        <div data-ev-id="ev_ab2e69c6a6" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* App Summary Card */}
           <div data-ev-id="app_card" className="bg-card border border-border rounded-[16px] p-6">
             <div data-ev-id="ev_52d21f612f" className="flex items-start justify-between mb-4">

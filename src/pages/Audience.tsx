@@ -72,7 +72,7 @@ export default function Audience() {
 
   return (
     <AppLayout>
-      <div data-ev-id="audience_page" className="p-8">
+      <div data-ev-id="audience_page" className="p-4 sm:p-8">
         {/* Header */}
         <div data-ev-id="ev_381c5707bb" className="mb-8">
           <h1 data-ev-id="ev_d64737b8b7" className="text-[28px] font-display font-bold text-text tracking-tight">Audience</h1>
@@ -80,7 +80,7 @@ export default function Audience() {
         </div>
 
         {/* Stats Row */}
-        <div data-ev-id="ev_497f32f184" className="grid grid-cols-4 gap-6 mb-8">
+        <div data-ev-id="ev_497f32f184" className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           <div data-ev-id="ev_aafa73d25f" className="bg-card border border-border rounded-[16px] p-6">
             <div data-ev-id="ev_bf38106ba7" className="flex items-center gap-3 mb-2">
               <div data-ev-id="ev_3c51a6a240" className="w-10 h-10 rounded-[10px] bg-primary/10 flex items-center justify-center">
@@ -168,7 +168,7 @@ export default function Audience() {
                         {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </p>
                     </div>
-                    <div data-ev-id="ev_451b15b117" className="flex-1 grid grid-cols-3 gap-4">
+                    <div data-ev-id="ev_451b15b117" className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
                       <div data-ev-id="ev_3cd6f49d5e">
                         <p data-ev-id="ev_25e211d07d" className="text-xs text-text-tertiary">Visits</p>
                         <p data-ev-id="ev_ea2643d7f3" className="text-lg font-semibold text-text">{day.visits ?? 0}</p>

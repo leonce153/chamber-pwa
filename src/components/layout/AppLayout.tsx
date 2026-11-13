@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppSettings } from '@/hooks/useAppSettings';
@@ -13,7 +14,9 @@ import {
   Settings,
   LogOut,
   Loader2,
-  ExternalLink } from
+  ExternalLink,
+  Menu,
+  X } from
 'lucide-react';
 
 interface AppLayoutProps {
@@ -30,6 +33,9 @@ export function AppLayout({ children }: AppLayoutProps) {
   const navigate = useNavigate();
   const { user, signOut, role } = useAuth();
   const { settings, loading: settingsLoading } = useAppSettings();
+  // On phones the menu slides in over the page instead of taking half the screen.
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => setMenuOpen(false), [location.pathname]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -63,9 +69,38 @@ export function AppLayout({ children }: AppLayoutProps) {
   }
 
   return (
-    <div data-ev-id="app_layout" className="min-h-screen bg-background flex">
+    <div data-ev-id="app_layout" className="min-h-screen bg-background flex flex-col md:flex-row">
+      {/* Phone top bar */}
+      <header data-ev-id="mobile_bar" className="md:hidden sticky top-0 z-30 flex items-center gap-3 px-4 h-14 bg-surface border-b border-border">
+        <button
+          data-ev-id="menu_btn"
+          onClick={() => setMenuOpen(true)}
+          className="p-2 -ml-2 rounded-[10px] text-text hover:bg-surface-elevated"
+          aria-label="Open menu">
+          <Menu className="w-6 h-6" />
+        </button>
+        <span data-ev-id="mobile_app_name" className="font-display font-bold text-text truncate">
+          {settings?.app_name ?? 'My App'}
+        </span>
+      </header>
+
+      {menuOpen &&
+      <div data-ev-id="menu_backdrop" className="md:hidden fixed inset-0 z-40 bg-black/40" onClick={() => setMenuOpen(false)} />
+      }
+
       {/* Sidebar */}
-      <aside data-ev-id="sidebar" className="w-[248px] bg-surface border-r border-border flex flex-col">
+      <aside
+        data-ev-id="sidebar"
+        className={`w-[248px] max-w-[85vw] bg-surface border-r border-border flex flex-col fixed inset-y-0 left-0 z-50 overflow-y-auto transition-transform md:static md:translate-x-0 md:z-auto md:max-w-none md:shrink-0 ${
+        menuOpen ? 'translate-x-0' : '-translate-x-full'}`
+        }>
+        <button
+          data-ev-id="menu_close"
+          onClick={() => setMenuOpen(false)}
+          className="md:hidden absolute top-4 right-3 p-2 rounded-[10px] text-text-tertiary hover:bg-surface-elevated"
+          aria-label="Close menu">
+          <X className="w-5 h-5" />
+        </button>
         {/* App Logo & Name */}
         <div data-ev-id="sidebar_header" className="p-5 border-b border-border">
           <Link data-ev-id="logo_link" to={role === 'sender' ? '/admin/notify' : '/admin/home'} className="flex items-center gap-2.5">
@@ -153,7 +188,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       </aside>
 
       {/* Main content */}
-      <main data-ev-id="main_content" className="flex-1 overflow-auto">
+      <main data-ev-id="main_content" className="flex-1 min-w-0 overflow-auto">
         {children}
       </main>
     </div>);

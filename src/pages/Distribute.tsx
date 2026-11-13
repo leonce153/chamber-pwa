@@ -72,7 +72,7 @@ export default function Distribute() {
 
   return (
     <AppLayout>
-      <div data-ev-id="distribute_page" className="p-8 max-w-4xl">
+      <div data-ev-id="distribute_page" className="p-4 sm:p-8 max-w-4xl">
         {/* Header */}
         <div data-ev-id="ev_6b4079f4a7" className="mb-8">
           <h1 data-ev-id="ev_d376f5ddf8" className="text-[28px] font-display font-bold text-text tracking-tight">Distribute</h1>
@@ -171,7 +171,7 @@ export default function Distribute() {
             <h3 data-ev-id="ev_290042d924" className="text-lg font-display font-bold text-text">How to install</h3>
           </div>
 
-          <div data-ev-id="ev_6536d33129" className="grid grid-cols-2 gap-6">
+          <div data-ev-id="ev_6536d33129" className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div data-ev-id="ev_2b21da0857" className="bg-surface-raised rounded-[12px] p-5">
               <h4 data-ev-id="ev_3825e45318" className="font-semibold text-text mb-3">iOS (Safari)</h4>
               <ol data-ev-id="ev_63ced1a81d" className="text-sm text-text-secondary flex flex-col gap-2">
