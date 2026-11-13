@@ -137,8 +137,11 @@ if (!$installed && $_SERVER['REQUEST_METHOD'] === 'POST') {
       }
     }
     // Name/description typed on this page win over imported ones.
-    db()->prepare('UPDATE app_settings SET app_name = ?, short_name = ?, description = COALESCE(NULLIF(?, \'\'), description), base_portal_url = COALESCE(NULLIF(?, \'\'), base_portal_url)')
-      ->execute([$p('name'), $p('short_name') ?: $p('name'), $p('description'), $p('portal_url')]);
+    $set = ['app_name = ?', 'short_name = ?'];
+    $args = [$p('name'), $p('short_name') ?: $p('name')];
+    if ($p('description') !== '') { $set[] = 'description = ?'; $args[] = $p('description'); }
+    if ($p('portal_url') !== '') { $set[] = 'base_portal_url = ?'; $args[] = $p('portal_url'); }
+    db()->prepare('UPDATE app_settings SET ' . implode(', ', $set))->execute($args);
 
     $uid = create_user($email, $pw, 'owner', $p('admin_name') ?: null);
     sign_in_session($uid);
