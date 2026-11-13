@@ -1,0 +1,5 @@
+# Created on the server at runtime; never part of a deploy
+data/*
+!data/.htaccess
+uploads/*
+!uploads/.htaccess

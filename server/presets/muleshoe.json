@@ -1,0 +1,22 @@
+{
+  "label": "Muleshoe Chamber of Commerce (Texas)",
+  "name": "Muleshoe Chamber of Commerce",
+  "short_name": "Muleshoe Chamber",
+  "description": "Official mobile app and portal companion for the Muleshoe Chamber of Commerce. Stay connected with local businesses, events, and community news.",
+  "town": "Muleshoe, Texas · Home of the National Mule Memorial",
+  "site_url": "https://app.muleshoetxchamber.com",
+  "portal_url": "https://muleshoetxchamber.com",
+  "mail_from": "no-reply@muleshoetxchamber.com",
+  "timezone": "America/Chicago",
+  "weather": {
+    "lat": 34.2265,
+    "lon": -102.7238,
+    "location": "Muleshoe, TX"
+  },
+  "icon_url": "preset:muleshoe-icon.png",
+  "import": {
+    "supabase_url": "https://lujwswmrzdxguoudwjoj.supabase.co",
+    "supabase_anon_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1andzd21yemR4Z3VvdWR3am9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwMzUxNDEsImV4cCI6MjEwNjYxMTE0MX0.vxBy32iFEqjVnlGWagXDukDtGb1BpW9m6ZdWDc-vbTY"
+  },
+  "assistant_image_url": "https://base44.app/api/apps/6a8c85d1bf3d91ec40ae059d/files/mp/public/6a8c85d1bf3d91ec40ae059d/da7544186_MuleAIConcciergeLogo.png"
+}

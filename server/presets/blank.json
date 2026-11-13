@@ -1,0 +1,21 @@
+{
+  "label": "New chamber (blank)",
+  "name": "",
+  "short_name": "",
+  "description": "",
+  "town": "",
+  "site_url": "",
+  "portal_url": "",
+  "mail_from": "",
+  "timezone": "America/Chicago",
+  "weather": {
+    "lat": "",
+    "lon": "",
+    "location": ""
+  },
+  "icon_url": "",
+  "import": {
+    "supabase_url": "",
+    "supabase_anon_key": ""
+  }
+}
