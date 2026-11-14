@@ -1,6 +1,6 @@
 {
-  "sha": "5a403ae94060b456a5986d902d1a45e9f82c1a4e",
-  "short": "5a403ae",
-  "message": "Dashboard: encrypt saved keys with OpenSSL instead of sodium (#3)",
-  "built_at": "2026-11-14T16:17:31Z"
+  "sha": "6b577c6747eb024a63d5f87eed7b50ba85617b73",
+  "short": "6b577c6",
+  "message": "Copy button for the dashboard API key; ignore stray spaces in pasted keys (#4)",
+  "built_at": "2026-11-14T16:37:03Z"
 }
