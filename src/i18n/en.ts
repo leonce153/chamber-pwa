@@ -82,10 +82,10 @@ export const en = {
   'alerts.notNow': 'Not now',
 
   // Push errors
-  'push.errUnavailable': 'Push notification service unavailable',
+  'push.errUnavailable': "Couldn't load the notification service. If you use an ad blocker or private DNS, allow cdn.gravitec.net, then reload this page.",
   'push.errNotInit': 'Push notifications not initialized',
-  'push.errDenied': 'Notification permission denied. Please enable in browser settings.',
-  'push.errRequired': 'Notification permission required',
+  'push.errDenied': 'Notifications are blocked for this site. In Chrome, tap the icon left of the web address (or ⋮ then Settings), open Notifications or Site settings, choose Allow, then try again.',
+  'push.errRequired': "Tap Allow when your browser asks. If nothing appeared, look for a bell or blocked-notification icon in the address bar.",
   'push.errFailed': 'Failed to enable notifications. Please try again.',
   'push.errUnsub': 'Failed to unsubscribe',
 

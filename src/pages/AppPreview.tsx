@@ -7,6 +7,7 @@ import { usePWAManifest } from '@/hooks/usePWAManifest';
 import { useServiceWorker } from '@/hooks/useServiceWorker';
 import { useGravitecPush } from '@/hooks/useGravitecPush';
 import { usePushTopics, isForThisDevice } from '@/hooks/usePushTopics';
+import { PUSH_ERRORS } from '@/lib/push-errors';
 import { useTheme, getAccentTextColor } from '@/hooks/useTheme';
 import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav, type NavTab } from '@/components/pwa/BottomNav';
@@ -509,6 +510,12 @@ export default function AppPreview({ appFromSubdomain }: AppPreviewProps = {}) {
                 </span>
               </button>
             </div>
+
+            {push.error && !push.subscribed &&
+          <p data-ev-id="ev_panel_push_error" role="alert" className="-mt-2 mb-4 px-1 text-[15px] text-pretty" style={{ color: isDark ? '#F1948A' : '#C0392B' }}>
+                {PUSH_ERRORS[push.error] ? t(PUSH_ERRORS[push.error]) : push.error}
+              </p>
+          }
 
             {/* Topics this device follows (only when the chamber has set some up) */}
             {pushTopics.topics.length > 0 &&

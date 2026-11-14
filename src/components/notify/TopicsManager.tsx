@@ -114,15 +114,15 @@ export function TopicsManager({ onChange }: {onChange?: () => void;}) {
       <div data-ev-id="topic_form_names" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label data-ev-id="topic_name_field" className="flex flex-col gap-1.5">
           <span data-ev-id="topic_name_label" className="text-sm font-medium text-text">Name</span>
-          <input data-ev-id="topic_name_input" className={input} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="City of Muleshoe" maxLength={60} autoFocus />
+          <input data-ev-id="topic_name_input" className={input} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Emergency alerts" maxLength={60} autoFocus />
         </label>
         <label data-ev-id="topic_name_es_field" className="flex flex-col gap-1.5">
           <span data-ev-id="topic_name_es_label" className="text-sm font-medium text-text">Name in Spanish (optional)</span>
-          <input data-ev-id="topic_name_es_input" className={input} value={draft.name_es} onChange={(e) => setDraft({ ...draft, name_es: e.target.value })} placeholder="Ciudad de Muleshoe" maxLength={60} />
+          <input data-ev-id="topic_name_es_input" className={input} value={draft.name_es} onChange={(e) => setDraft({ ...draft, name_es: e.target.value })} placeholder="Alertas de emergencia" maxLength={60} />
         </label>
         <label data-ev-id="topic_desc_field" className="flex flex-col gap-1.5">
           <span data-ev-id="topic_desc_label" className="text-sm font-medium text-text">Short description (optional)</span>
-          <input data-ev-id="topic_desc_input" className={input} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} placeholder="Water, streets and city news" maxLength={120} />
+          <input data-ev-id="topic_desc_input" className={input} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} placeholder="Severe weather, closures and urgent news" maxLength={120} />
         </label>
         <label data-ev-id="topic_desc_es_field" className="flex flex-col gap-1.5">
           <span data-ev-id="topic_desc_es_label" className="text-sm font-medium text-text">Description in Spanish (optional)</span>

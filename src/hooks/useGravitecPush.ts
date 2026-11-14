@@ -31,6 +31,15 @@ interface GravitecPushState {
  * 
  * The SDK is loaded by: <script src="https://cdn.gravitec.net/storage/{appKey}/client.js" async>
  */
+type GravitecQueue = { push: (args: unknown[]) => void };
+
+/** The loaded Gravitec SDK, or null while it is still loading (or blocked). */
+function gravitecSdk(): GravitecQueue | null {
+  const g = window.Gravitec as unknown;
+  if (!g || Array.isArray(g) || typeof (g as GravitecQueue).push !== 'function') return null;
+  return g as GravitecQueue;
+}
+
 export function useGravitecPush(app: App | null, userId?: string | null): GravitecPushState & {
   subscribe: () => Promise<boolean>;
   unsubscribe: () => Promise<boolean>;
@@ -94,41 +103,63 @@ export function useGravitecPush(app: App | null, userId?: string | null): Gravit
     }
   }, [state.initialized]);
 
-  // Subscribe to push notifications
+  // Subscribe to push notifications.
+  // Gravitec's registerUserForPush asks the browser for permission AND registers this device with
+  // Gravitec. (Asking the browser alone, as before, left the device unregistered until a reload.)
   const subscribe = useCallback(async (): Promise<boolean> => {
-    if (!state.initialized) {
-      setState(prev => ({ ...prev, error: 'Push notifications not initialized' }));
+    if (typeof Notification === 'undefined' || !('serviceWorker' in navigator)) {
+      setState(prev => ({ ...prev, error: 'Push notification service unavailable' }));
+      return false;
+    }
+    if (Notification.permission === 'denied') {
+      setState(prev => ({ ...prev, permission: 'denied', error: 'Notification permission denied. Please enable in browser settings.' }));
       return false;
     }
 
     setState(prev => ({ ...prev, loading: true, error: null }));
 
-    try {
-      // Request notification permission
-      // Gravitec's client.js automatically subscribes the user when permission is granted
-      const permission = await Notification.requestPermission();
-      
-      setState(prev => ({ ...prev, permission }));
+    // The SDK loads async; give it a few seconds if the person was quick.
+    let gravitec = gravitecSdk();
+    for (let i = 0; !gravitec && i < 10; i++) {
+      await new Promise(r => setTimeout(r, 500));
+      gravitec = gravitecSdk();
+    }
+    if (!gravitec) {
+      setState(prev => ({ ...prev, loading: false, error: 'Push notification service unavailable' }));
+      return false;
+    }
 
+    try {
+      await new Promise<void>((resolve) => {
+        let done = false;
+        const finish = () => { if (!done) { done = true; resolve(); } };
+        // Native prompt: the person already tapped our own button, so skip Gravitec's extra pop-up.
+        gravitec!.push(['registerUserForPush', finish, { mobileProps: { type: 'NATIVE' }, desktopProps: { type: 'NATIVE' } }]);
+        // Resolve once the browser answers, even if Gravitec never calls back.
+        const started = Date.now();
+        const poll = setInterval(() => {
+          if (Notification.permission !== 'default' || Date.now() - started > 60000) {
+            clearInterval(poll);
+            setTimeout(finish, 1500);
+          }
+        }, 300);
+      });
+
+      const permission = Notification.permission as NotificationPermission;
+      setState(prev => ({ ...prev, permission }));
       if (permission !== 'granted') {
         setState(prev => ({
           ...prev,
           loading: false,
-          error: permission === 'denied' 
-            ? 'Notification permission denied. Please enable in browser settings.' 
+          error: permission === 'denied'
+            ? 'Notification permission denied. Please enable in browser settings.'
             : 'Notification permission required',
         }));
         return false;
       }
 
-      // Permission granted - Gravitec handles subscription automatically
-      // Set alias with user ID for targeted test sends
-      if (userId) {
-        const gravitec = window.Gravitec;
-        if (gravitec && !Array.isArray(gravitec) && typeof gravitec.push === 'function') {
-          gravitec.push(['segmentation.setAlias', userId]);
-        }
-      }
+      // Alias = team member id, so "Send test to me" reaches this device.
+      if (userId) gravitec.push(['segmentation.setAlias', userId]);
       setState(prev => ({ ...prev, subscribed: true, loading: false }));
       return true;
     } catch (err) {
@@ -139,7 +170,7 @@ export function useGravitecPush(app: App | null, userId?: string | null): Gravit
       }));
       return false;
     }
-  }, [state.initialized, userId]);
+  }, [userId]);
 
   // Unsubscribe from push notifications
   const unsubscribe = useCallback(async (): Promise<boolean> => {
