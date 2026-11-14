@@ -13,7 +13,7 @@ interface Guide {
 
 const TEXT: Record<'en' | 'es', { title: string; blockedTitle: string; needs: string; guides: Record<Device, Guide> }> = {
   en: {
-    title: 'How to turn on notifications',
+    title: 'How to install the app and turn on notifications',
     blockedTitle: 'Still not working?',
     needs: 'iPhone needs iOS 16.4 or newer.',
     guides: {
@@ -21,9 +21,9 @@ const TEXT: Record<'en' | 'es', { title: string; blockedTitle: string; needs: st
         label: 'Android',
         steps: [
           'Open this app in Chrome.',
-          'Tap the bell at the top, then turn on Push Notifications.',
-          'Tap Allow when Chrome asks.',
-          'Optional: tap ⋮ then Install app to put it on your home screen.'
+          'Tap ⋮ (top right), then Install app (or Add to Home screen), then Install.',
+          'Open the app from your home screen.',
+          'Tap the bell, turn on Push Notifications, then tap Allow.'
         ],
         blocked: [
           'Tap the small icon at the left inside the address bar, then Permissions, and allow Notifications (or tap Reset permissions).',
@@ -62,7 +62,7 @@ const TEXT: Record<'en' | 'es', { title: string; blockedTitle: string; needs: st
     }
   },
   es: {
-    title: 'Cómo activar las notificaciones',
+    title: 'Cómo instalar la app y activar las notificaciones',
     blockedTitle: '¿Todavía no funciona?',
     needs: 'En iPhone se necesita iOS 16.4 o más reciente.',
     guides: {
@@ -70,9 +70,9 @@ const TEXT: Record<'en' | 'es', { title: string; blockedTitle: string; needs: st
         label: 'Android',
         steps: [
           'Abra esta app en Chrome.',
-          'Toque la campana arriba y active Notificaciones push.',
-          'Toque Permitir cuando Chrome se lo pida.',
-          'Opcional: toque ⋮ y luego Instalar app para tenerla en su pantalla de inicio.'
+          'Toque ⋮ (arriba a la derecha), luego Instalar app (o Agregar a la pantalla principal) e Instalar.',
+          'Abra la app desde su pantalla de inicio.',
+          'Toque la campana, active Notificaciones push y toque Permitir.'
         ],
         blocked: [
           'Toque el ícono pequeño a la izquierda dentro de la barra de direcciones, luego Permisos, y permita Notificaciones (o toque Restablecer permisos).',
