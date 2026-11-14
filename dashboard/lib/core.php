@@ -88,16 +88,19 @@ function now(): string {
 function seal(?string $plain): ?string {
   if ($plain === null || $plain === '') return null;
   $key = base64_decode((string) cfg('secret'));
-  $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-  return 'v1:' . base64_encode($nonce . sodium_crypto_secretbox($plain, $nonce, $key));
+  $iv = random_bytes(12);
+  $tag = '';
+  $ct = openssl_encrypt($plain, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
+  if ($ct === false) throw new RuntimeException('Could not encrypt');
+  return 'v2:' . base64_encode($iv . $tag . $ct);
 }
 
 function unseal(?string $sealed): ?string {
-  if (!$sealed || !str_starts_with($sealed, 'v1:')) return null;
+  if (!$sealed || !str_starts_with($sealed, 'v2:')) return null;
   $raw = base64_decode(substr($sealed, 3));
   $key = base64_decode((string) cfg('secret'));
-  $n = SODIUM_CRYPTO_SECRETBOX_NONCEBYTES;
-  $out = sodium_crypto_secretbox_open(substr($raw, $n), substr($raw, 0, $n), $key);
+  if (strlen($raw) < 29) return null;
+  $out = openssl_decrypt(substr($raw, 28), 'aes-256-gcm', $key, OPENSSL_RAW_DATA, substr($raw, 0, 12), substr($raw, 12, 16));
   return $out === false ? null : $out;
 }
 
