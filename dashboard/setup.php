@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($cfg['setup_code']) && !hash_equals((string) $cfg['setup_code'], trim((string) ($_POST['setup_code'] ?? '')))) {
       throw new RuntimeException('That setup code is not right.');
     }
-    if (empty($cfg['secret'])) $cfg['secret'] = base64_encode(random_bytes(SODIUM_CRYPTO_SECRETBOX_KEYBYTES));
+    if (empty($cfg['secret'])) $cfg['secret'] = base64_encode(random_bytes(32));
     $email = strtolower(trim((string) ($_POST['email'] ?? '')));
     $pw = (string) ($_POST['password'] ?? '');
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) throw new RuntimeException('Enter a valid email address.');
