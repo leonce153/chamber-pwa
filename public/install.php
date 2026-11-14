@@ -390,7 +390,10 @@ $val = fn(string $key, $fallback = '') => $_POST[$key] ?? $fallback;
   <section>
     <h2>Dashboard API key</h2>
     <p>A central dashboard can manage this app by sending this key in an <code>X-Api-Key</code> header. Treat it like a password.</p>
-    <details><summary>Show key</summary><p><span class="key"><?= $h($cfg['api_key'] ?? '') ?></span></p></details>
+    <details><summary>Show key</summary>
+      <p style="display:flex;gap:8px;align-items:center"><input id="api-key" class="key" readonly value="<?= $h($cfg['api_key'] ?? '') ?>" onfocus="this.select()" style="flex:1;min-width:0">
+      <button type="button" class="secondary" onclick="var k=document.getElementById('api-key');k.select();(navigator.clipboard?navigator.clipboard.writeText(k.value):Promise.reject()).then(function(){},function(){document.execCommand('copy')});this.textContent='Copied';">Copy</button></p>
+    </details>
     <form method="post" class="actions"><input type="hidden" name="csrf" value="<?= $h($_SESSION['csrf']) ?>"><input type="hidden" name="act" value="new_api_key"><button class="secondary">Make a new key</button></form>
   </section>
 
