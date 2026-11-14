@@ -1,6 +1,6 @@
 {
-  "sha": "6b577c6747eb024a63d5f87eed7b50ba85617b73",
-  "short": "6b577c6",
-  "message": "Copy button for the dashboard API key; ignore stray spaces in pasted keys (#4)",
-  "built_at": "2026-11-14T16:37:03Z"
+  "sha": "a24c2bc85ce3765e9552c24b27d3c95e8b6fbbca",
+  "short": "a24c2bc",
+  "message": "Show the Dashboard API key above the Gravitec settings (#5)",
+  "built_at": "2026-11-14T16:39:16Z"
 }

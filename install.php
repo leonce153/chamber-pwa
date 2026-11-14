@@ -361,6 +361,16 @@ $val = fn(string $key, $fallback = '') => $_POST[$key] ?? $fallback;
 <?php else: ?>
   <h1>Server settings</h1>
   <p class="lead">Private settings for <?= $h(app_name()) ?>. Names, colors and Home content are edited in the <a href="/admin">admin</a>.</p>
+  <section>
+    <h2>Dashboard API key</h2>
+    <p>Paste this key into the master dashboard (dashboard.chamberloop.com) when you add this app. It is <strong>not</strong> the Gravitec key. Treat it like a password.</p>
+    <details><summary>Show key</summary>
+      <p style="display:flex;gap:8px;align-items:center"><input id="api-key" class="key" readonly value="<?= $h($cfg['api_key'] ?? '') ?>" onfocus="this.select()" style="flex:1;min-width:0">
+      <button type="button" class="secondary" onclick="var k=document.getElementById('api-key');k.select();(navigator.clipboard?navigator.clipboard.writeText(k.value):Promise.reject()).then(function(){},function(){document.execCommand('copy')});this.textContent='Copied';">Copy</button></p>
+    </details>
+    <form method="post" class="actions"><input type="hidden" name="csrf" value="<?= $h($_SESSION['csrf']) ?>"><input type="hidden" name="act" value="new_api_key"><button class="secondary">Make a new key</button></form>
+  </section>
+
   <form method="post"><section>
     <input type="hidden" name="csrf" value="<?= $h($_SESSION['csrf']) ?>"><input type="hidden" name="act" value="save">
     <h2>Push notifications (Gravitec)</h2>
@@ -386,16 +396,6 @@ $val = fn(string $key, $fallback = '') => $_POST[$key] ?? $fallback;
     </div>
     <div class="actions"><button>Save settings</button></div>
   </section></form>
-
-  <section>
-    <h2>Dashboard API key</h2>
-    <p>A central dashboard can manage this app by sending this key in an <code>X-Api-Key</code> header. Treat it like a password.</p>
-    <details><summary>Show key</summary>
-      <p style="display:flex;gap:8px;align-items:center"><input id="api-key" class="key" readonly value="<?= $h($cfg['api_key'] ?? '') ?>" onfocus="this.select()" style="flex:1;min-width:0">
-      <button type="button" class="secondary" onclick="var k=document.getElementById('api-key');k.select();(navigator.clipboard?navigator.clipboard.writeText(k.value):Promise.reject()).then(function(){},function(){document.execCommand('copy')});this.textContent='Copied';">Copy</button></p>
-    </details>
-    <form method="post" class="actions"><input type="hidden" name="csrf" value="<?= $h($_SESSION['csrf']) ?>"><input type="hidden" name="act" value="new_api_key"><button class="secondary">Make a new key</button></form>
-  </section>
 
   <section>
     <h2>Maintenance</h2>
