@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTeam, type TeamRole } from '@/hooks/useTeam';
+import { useTeam, type TeamRole, type TeamMember } from '@/hooks/useTeam';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ROLE_LABELS } from '@/types/auth';
 import {
-  Loader2, Users, Crown, Edit3, Send, Trash2, Mail, AlertCircle, Check, X, UserPlus, RotateCw, Clock, Copy } from
+  Loader2, Users, Crown, Edit3, Send, Trash2, Mail, AlertCircle, Check, X, UserPlus, RotateCw, Clock, Copy, Globe, Tag } from
 'lucide-react';
 
 const ROLE_OPTIONS: {value: TeamRole;label: string;description: string;}[] = [
@@ -26,9 +27,86 @@ function copyText(text: string) {
   document.body.removeChild(textarea);
 }
 
+interface TopicOption {id: string;name: string;is_visible: boolean;}
+
+/** Checkboxes for which topics a sender may use. null = everyone. */
+function TopicPicker({ topics, value, onChange }: {topics: TopicOption[];value: string[] | null;onChange: (v: string[] | null) => void;}) {
+  return (
+    <div data-ev-id="topic_picker" className="flex flex-col gap-1.5">
+      <label data-ev-id="topic_picker_all" className="flex items-center gap-2 text-sm text-text cursor-pointer min-h-[32px]">
+        <input data-ev-id="topic_picker_all_input" type="checkbox" checked={value === null} onChange={(e) => onChange(e.target.checked ? null : [])} className="w-4 h-4 accent-primary" />
+        <Globe className="w-3.5 h-3.5 text-text-tertiary" /> Everyone (all subscribers and every topic)
+      </label>
+      {topics.map((t) =>
+      <label data-ev-id="topic_picker_option" key={t.id} className="flex items-center gap-2 text-sm text-text cursor-pointer min-h-[32px]">
+          <input data-ev-id="topic_picker_input" type="checkbox"
+        checked={value !== null && value.includes(t.id)}
+        onChange={() => {
+          const cur = value ?? [];
+          onChange(cur.includes(t.id) ? cur.filter((x) => x !== t.id) : [...cur, t.id]);
+        }}
+        className="w-4 h-4 accent-primary" />
+          <Tag className="w-3.5 h-3.5 text-text-tertiary" /> {t.name}{!t.is_visible && <span data-ev-id="topic_picker_hidden" className="text-text-tertiary">(hidden)</span>}
+        </label>
+      )}
+    </div>);
+}
+
+/** On a sender's row: what they can send to, with a Change button. */
+function SenderAccess({ member, topics, onSave }: {member: TeamMember;topics: TopicOption[];onSave: (ids: string[] | null) => Promise<string | null>;}) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState<string[] | null>(member.push_topic_ids);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const names = (member.push_topic_ids ?? []).map((id) => topics.find((t) => t.id === id)?.name).filter(Boolean);
+  const label = member.push_topic_ids === null ? 'Everyone' : names.join(', ') || 'No topics';
+
+  if (!editing) {
+    return (
+      <div data-ev-id="sender_access" className="w-full pl-16 -mt-2 flex items-center gap-2 text-sm flex-wrap">
+        <span data-ev-id="sender_access_label" className="text-text-tertiary">Can send to:</span>
+        <span data-ev-id="sender_access_value" className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[6px] ${member.push_topic_ids === null ? 'bg-surface-raised text-text-secondary' : 'bg-primary/10 text-primary'}`}>
+          {member.push_topic_ids === null ? <Globe className="w-3 h-3" /> : <Tag className="w-3 h-3" />} {label}
+        </span>
+        <button data-ev-id="sender_access_change" onClick={() => {setValue(member.push_topic_ids);setEditing(true);setErr(null);}} className="text-primary hover:underline">Change</button>
+      </div>);
+  }
+  return (
+    <div data-ev-id="sender_access_edit" className="w-full sm:pl-16 flex flex-col gap-3">
+      <div data-ev-id="sender_access_box" className="bg-surface-raised border border-border rounded-[10px] p-3">
+        <p data-ev-id="sender_access_title" className="text-sm font-medium text-text mb-2">What can {member.full_name || member.email} send to?</p>
+        <TopicPicker topics={topics} value={value} onChange={setValue} />
+        {err && <p data-ev-id="sender_access_err" className="text-sm text-destructive mt-2">{err}</p>}
+        <div data-ev-id="sender_access_actions" className="flex gap-2 justify-end mt-3">
+          <button data-ev-id="sender_access_cancel" onClick={() => setEditing(false)} className="px-3 py-1.5 rounded-[8px] border border-border text-sm text-text">Cancel</button>
+          <button data-ev-id="sender_access_save"
+          disabled={saving || (value !== null && value.length === 0)}
+          onClick={async () => {
+            setSaving(true);
+            const e = await onSave(value);
+            setSaving(false);
+            if (e) setErr(e);else
+            setEditing(false);
+          }}
+          className="px-3 py-1.5 rounded-[8px] bg-primary text-white text-sm font-medium disabled:opacity-50 flex items-center gap-1.5">
+            {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Save
+          </button>
+        </div>
+      </div>
+    </div>);
+}
+
 export default function Team() {
   const { user } = useAuth();
-  const { members, loading, error, inviteMember, updateMemberRole, removeMember } = useTeam();
+  const { members, loading, error, inviteMember, updateMemberRole, removeMember, setMemberTopics } = useTeam();
+  const [topics, setTopics] = useState<TopicOption[]>([]);
+  const [inviteTopics, setInviteTopics] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.from('push_topics').select('id, name, is_visible').order('position', { ascending: true }).
+    then(({ data }) => setTopics((data ?? []) as TopicOption[]));
+  }, []);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -54,6 +132,7 @@ export default function Team() {
     setInviteEmail('');
     setInviteName('');
     setInviteRole('sender');
+    setInviteTopics(null);
     setInviteError(null);
     setInviteLink(null);
     setCopied(false);
@@ -63,7 +142,11 @@ export default function Team() {
     e.preventDefault();
     setInviting(true);
     setInviteError(null);
-    const res = await inviteMember(inviteEmail.trim(), inviteRole, inviteName.trim() || undefined);
+    if (inviteRole === 'sender' && inviteTopics !== null && inviteTopics.length === 0) {
+      setInviting(false);
+      return setInviteError('Pick at least one topic, or choose Everyone.');
+    }
+    const res = await inviteMember(inviteEmail.trim(), inviteRole, inviteName.trim() || undefined, inviteRole === 'sender' ? inviteTopics : null);
     setInviting(false);
     if (res.error) return setInviteError(res.error);
     if (res.emailSent) {
@@ -221,6 +304,9 @@ export default function Team() {
                         </button>
                     }
                     </div>
+                    {member.role === 'sender' && topics.length > 0 &&
+                  <SenderAccess key={(member.push_topic_ids ?? ['*']).join(',')} member={member} topics={topics} onSave={(ids) => setMemberTopics(member.id, ids)} />
+                  }
                   </div>);
             })}
             </div>
@@ -234,7 +320,7 @@ export default function Team() {
             {[
             { role: 'owner' as const, yes: ['Everything editors can do', 'Invite and remove team members', 'Change roles', 'App settings and distribution'], no: [] },
             { role: 'editor' as const, yes: ['Edit app content and features', 'Send notifications', 'View stats and audience'], no: ['Team, settings, distribution'] },
-            { role: 'sender' as const, yes: ['Write and send notifications', 'Send tests to themselves', 'See notification history'], no: ['App content, stats, settings, team'] }].
+            { role: 'sender' as const, yes: ['Write and send notifications', 'Can be limited to certain topics', 'Send tests to themselves', 'See notification history'], no: ['App content, stats, settings, team'] }].
             map(({ role, yes, no }) => {
               const Icon = ROLE_ICON[role];
               return (
@@ -316,6 +402,12 @@ export default function Team() {
                         </label>);
                 })}
                   </fieldset>
+                  {inviteRole === 'sender' && topics.length > 0 &&
+              <fieldset data-ev-id="invite_topics_field" className="flex flex-col gap-1">
+                      <legend data-ev-id="invite_topics_label" className="block text-sm font-medium text-text mb-1.5">Can send to</legend>
+                      <TopicPicker topics={topics} value={inviteTopics} onChange={setInviteTopics} />
+                    </fieldset>
+              }
                   <button data-ev-id="invite_submit" type="submit" disabled={inviting || !inviteEmail.trim()}
               className="bg-primary hover:bg-primary-hover text-white font-medium py-2.5 px-4 rounded-[10px] flex items-center justify-center gap-2 min-h-[44px] disabled:opacity-50 mt-1">
                     {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Mail className="w-4 h-4" /> Send invite</>}

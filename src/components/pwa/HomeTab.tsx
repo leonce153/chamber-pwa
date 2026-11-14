@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { isForThisDevice } from '@/hooks/usePushTopics';
+import { PUSH_ERRORS } from '@/lib/push-errors';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { supabase } from '@/integrations/supabase/client';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
@@ -7,7 +9,6 @@ import { SkyHero } from '@/components/pwa/SkyHero';
 import type { WeatherState } from '@/hooks/use-weather';
 import type { SkyPeriod } from '@/hooks/use-sky-period';
 import { useLanguage } from '@/hooks/use-language';
-import type { TranslationKey } from '@/i18n/en';
 import { useHomeLayout } from '@/hooks/use-home-layout';
 import { HomeSections, type UpdateItem } from '@/components/pwa/home/HomeSections';
 import { AlertsCard } from '@/components/pwa/home/AlertsCard';
@@ -51,15 +52,6 @@ interface HomeTabProps {
 const DISMISS_KEY = 'ev_alerts_card_dismissed_at';
 const DISMISS_MS = 14 * 24 * 60 * 60 * 1000;
 
-// Known push errors (from the push hook) shown in the current language
-const PUSH_ERRORS: Record<string, TranslationKey> = {
-  'Push notification service unavailable': 'push.errUnavailable',
-  'Push notifications not initialized': 'push.errNotInit',
-  'Notification permission denied. Please enable in browser settings.': 'push.errDenied',
-  'Notification permission required': 'push.errRequired',
-  'Failed to enable notifications. Please try again.': 'push.errFailed',
-  'Failed to unsubscribe': 'push.errUnsub'
-};
 
 export function HomeTab({
   app,
@@ -89,13 +81,13 @@ export function HomeTab({
     if (!supabase) return;
     const { data } = await supabase.
     from('push_notifications').
-    select('id, title, body, sent_at, url').
+    select('id, title, body, sent_at, url, topic_ids').
     eq('app_id', app.id).
     eq('status', 'sent').
     order('sent_at', { ascending: false }).
-    limit(20);
+    limit(30);
     const filtered = (data ?? []).
-    filter((n) => !n.title.startsWith('[TEST]')).
+    filter((n) => !n.title.startsWith('[TEST]') && isForThisDevice(n)).
     slice(0, 10) as UpdateItem[];
     setRecentNotifications(filtered);
   }, [app.id]);

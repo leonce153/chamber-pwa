@@ -84,10 +84,10 @@ export const es: Dictionary = {
   'alerts.notNow': 'Ahora no',
 
   // Push errors
-  'push.errUnavailable': 'El servicio de notificaciones no está disponible',
+  'push.errUnavailable': 'No se pudo cargar el servicio de notificaciones. Si usa un bloqueador de anuncios o DNS privado, permita cdn.gravitec.net y vuelva a cargar la página.',
   'push.errNotInit': 'Las notificaciones todavía no están listas',
-  'push.errDenied': 'Se negó el permiso de notificaciones. Actívelo en la configuración del navegador.',
-  'push.errRequired': 'Se necesita permiso para enviar notificaciones',
+  'push.errDenied': 'Las notificaciones están bloqueadas para este sitio. En Chrome, toque el ícono a la izquierda de la dirección web (o ⋮ y luego Configuración), abra Notificaciones o Configuración del sitio, elija Permitir e inténtelo de nuevo.',
+  'push.errRequired': 'Toque Permitir cuando el navegador se lo pida. Si no apareció nada, busque un ícono de campana o de notificaciones bloqueadas en la barra de direcciones.',
   'push.errFailed': 'No se pudieron activar las notificaciones. Inténtelo de nuevo.',
   'push.errUnsub': 'No se pudieron desactivar las notificaciones',
 
@@ -156,5 +156,8 @@ export const es: Dictionary = {
   'panel.close': 'Cerrar notificaciones',
   'panel.push': 'Notificaciones push',
   'panel.enable': 'Activar notificaciones',
-  'panel.disable': 'Desactivar notificaciones'
+  'panel.disable': 'Desactivar notificaciones',
+  'panel.topics': 'Temas',
+  'panel.topicsHint': 'Elija sobre qué quiere recibir avisos. Las noticias importantes de la Cámara llegan a todos.',
+  'panel.topicsOff': 'Active las notificaciones para elegir temas.'
 };

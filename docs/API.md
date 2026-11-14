@@ -34,19 +34,29 @@ Filters: `eq neq gt gte lt lte like ilike is in not_eq not_in not_is`. Also `lim
 
 Tables: `app_settings`, `apps`, `app_features`, `feature_links`, `feature_rss_feeds`,
 `feature_custom_pages`, `home_sections`, `home_section_items`, `home_banner_slides`,
-`home_gallery_photos`, `home_image_cleanup`, `push_notifications`, `profiles`, `app_users`,
+`home_gallery_photos`, `home_image_cleanup`, `push_notifications`, `push_topics`, `profiles`, `app_users`,
 `app_analytics`. Columns are listed in `public/server/lib/schema.php`.
 
 ## Push notifications
 
-1. Create the record: `POST /api/rest` `{ "table": "push_notifications", "action": "insert", "values": { "app_id": "<apps.id>", "title": "…", "body": "…", "url": "https://…" }, "returning": true, "mode": "single" }`
-2. Send it: `POST /api/functions/send-push-notification` `{ "notificationId": "<id>", "title": "…", "body": "…", "url": "…" }`
+`POST /api/functions/send-push-notification` with an `action`:
+
+- `{ "action": "send", "title": "…", "body": "…", "url": "https://…", "topicIds": [] }` saves and sends. Empty `topicIds` = everyone; otherwise only subscribers who follow at least one of those topics (Gravitec tags).
+- `{ "action": "draft", … }` saves without sending. Pass `notificationId` to update a draft, or to send it with `send`.
+- `{ "action": "test", "title", "body", "url" }` sends only to the signed-in person's own devices. Nothing is saved.
+- `{ "action": "delete", "notificationId" }`
+- `{ "action": "options" }` returns the topics this person may send to and `canSendToEveryone`.
+
+Topics live in the `push_topics` table (owners edit them on the Notifications page). A sender can be limited to
+certain topics (`profiles.push_topic_ids`, set with `manage-team` `set_topics`); NULL means no limit. Owners,
+editors and the dashboard API key can always send to everyone. The old flow (insert a `push_notifications` row, then
+call this function with its `notificationId`) still works for owners and editors and sends to everyone.
 
 ## Other functions
 
 `POST /api/functions/<name>`:
 
-- `manage-team` — `{ "action": "list" }`, `{ "action": "invite", "email", "role": "owner|editor|sender", "fullName" }`, `{ "action": "update_role", "userId", "role" }`, `{ "action": "remove", "userId" }`
+- `manage-team` — `{ "action": "list" }`, `{ "action": "invite", "email", "role": "owner|editor|sender", "fullName" }`, `{ "action": "update_role", "userId", "role" }`, `{ "action": "remove", "userId" }`, `{ "action": "set_topics", "userId", "topicIds": [...] | null }` (senders: which topics they may send to; `null` = everyone). `invite` also takes `topicIds` for a new sender.
 - `get-home-events` — `{ "section_id" }` upcoming events from an events section's feed
 - `get-weather` — current weather and forecast
 - `banner-stats` — `{ "kind": "tap" | "view", "ids": [...] }`
