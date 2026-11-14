@@ -116,7 +116,7 @@ if ($post) {
         flash('The branch name can only use letters, numbers, dots, dashes and slashes.', 'err');
         redirect($id ? "index.php?p=app&id=$id&edit=1" : 'index.php?p=app_new');
       }
-      $key = trim((string) ($_POST['api_key'] ?? ''));
+      $key = preg_replace('/\s+/', '', (string) ($_POST['api_key'] ?? ''));
       $hook = trim((string) ($_POST['deploy_hook'] ?? ''));
       if ($hook !== '' && !preg_match('#^https://[^\s]+$#', $hook)) {
         flash('The deploy webhook must be an https:// address.', 'err');
