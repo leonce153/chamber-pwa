@@ -86,7 +86,7 @@ export const es: Dictionary = {
   // Push errors
   'push.errUnavailable': 'No se pudo cargar el servicio de notificaciones. Si usa un bloqueador de anuncios o DNS privado, permita cdn.gravitec.net y vuelva a cargar la página.',
   'push.errNotInit': 'Las notificaciones todavía no están listas',
-  'push.errDenied': 'Las notificaciones están bloqueadas para este sitio. En Chrome, toque el ícono a la izquierda de la dirección web (o ⋮ y luego Configuración), abra Notificaciones o Configuración del sitio, elija Permitir e inténtelo de nuevo.',
+  'push.errDenied': 'Las notificaciones están bloqueadas para este sitio. En Chrome, toque ⋮ → Configuración → Configuración de sitios → Notificaciones, busque este sitio en Bloqueados y elija Permitir. ¿No aparece? Use Configuración de sitios → Todos los sitios → este sitio → Borrar y restablecer. Luego vuelva a cargar e inténtelo de nuevo.',
   'push.errRequired': 'Toque Permitir cuando el navegador se lo pida. Si no apareció nada, busque un ícono de campana o de notificaciones bloqueadas en la barra de direcciones.',
   'push.errFailed': 'No se pudieron activar las notificaciones. Inténtelo de nuevo.',
   'push.errUnsub': 'No se pudieron desactivar las notificaciones',

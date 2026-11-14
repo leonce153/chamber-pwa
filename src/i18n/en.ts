@@ -84,7 +84,7 @@ export const en = {
   // Push errors
   'push.errUnavailable': "Couldn't load the notification service. If you use an ad blocker or private DNS, allow cdn.gravitec.net, then reload this page.",
   'push.errNotInit': 'Push notifications not initialized',
-  'push.errDenied': 'Notifications are blocked for this site. In Chrome, tap the icon left of the web address (or ⋮ then Settings), open Notifications or Site settings, choose Allow, then try again.',
+  'push.errDenied': 'Notifications are blocked for this site. In Chrome, tap ⋮ → Settings → Site settings → Notifications, find this site under Blocked and choose Allow. Not listed? Use Site settings → All sites → this site → Clear & reset. Then reload and try again.',
   'push.errRequired': "Tap Allow when your browser asks. If nothing appeared, look for a bell or blocked-notification icon in the address bar.",
   'push.errFailed': 'Failed to enable notifications. Please try again.',
   'push.errUnsub': 'Failed to unsubscribe',
