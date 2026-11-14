@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { isForThisDevice } from '@/hooks/usePushTopics';
+import { hiddenNotificationIds, HIDDEN_EVENT } from '@/lib/hidden-notifications';
 import { PUSH_ERRORS } from '@/lib/push-errors';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { supabase } from '@/integrations/supabase/client';
@@ -86,8 +87,9 @@ export function HomeTab({
     eq('status', 'sent').
     order('sent_at', { ascending: false }).
     limit(30);
+    const hidden = hiddenNotificationIds();
     const filtered = (data ?? []).
-    filter((n) => !n.title.startsWith('[TEST]') && isForThisDevice(n)).
+    filter((n) => !n.title.startsWith('[TEST]') && !hidden.has(n.id) && isForThisDevice(n)).
     slice(0, 10) as UpdateItem[];
     setRecentNotifications(filtered);
   }, [app.id]);
@@ -95,8 +97,16 @@ export function HomeTab({
   useEffect(() => {
     fetchNotifications();
     const handleFocus = () => fetchNotifications();
+    const onHidden = () => {
+      const hidden = hiddenNotificationIds();
+      setRecentNotifications((prev) => prev.filter((n) => !hidden.has(n.id)));
+    };
     window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
+    window.addEventListener(HIDDEN_EVENT, onHidden);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener(HIDDEN_EVENT, onHidden);
+    };
   }, [fetchNotifications]);
 
   const handleTarget = (target: LinkTarget, title: string) => {

@@ -76,7 +76,7 @@ export const en = {
   'alerts.step2b': 'Add to Home Screen',
   'alerts.step3a': 'Open the app from your Home Screen and tap',
   'alerts.step3b': 'Turn on',
-  'alerts.safariNote': "Open this page in Safari first. Other iPhone browsers can't add apps to the Home Screen.",
+  'alerts.safariNote': 'Using Chrome? Tap the Share button at the top right of the address bar, then Add to Home Screen. No such option? Open this page in Safari.',
   'alerts.turningOn': 'Turning on…',
   'alerts.turnOn': 'Turn on',
   'alerts.notNow': 'Not now',
@@ -95,6 +95,8 @@ export const en = {
   'type.emergency': 'Emergency Alert',
   'type.update': 'Update',
   'home.emptyTitle': 'All quiet on the range.',
+  'panel.clearAll': 'Clear all',
+  'panel.hideOne': 'Remove from this phone',
   'home.emptyDesc': 'News and events from the Chamber will show up here.',
   'home.footer': 'Muleshoe, Texas · Home of the National Mule Memorial',
 

@@ -93,15 +93,32 @@ export function useGravitecPush(app: App | null, userId?: string | null): Gravit
     };
   }, [app]);
 
-  // Check if user has already granted notification permission
+  // Follow the browser's permission: already granted on load, or granted later through another
+  // prompt (Gravitec's own pop-up, or the browser's site settings) without using our toggle.
   useEffect(() => {
-    if (!state.initialized) return;
-    
-    // Check browser permission state
-    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-      setState(prev => ({ ...prev, subscribed: true }));
-    }
-  }, [state.initialized]);
+    if (!state.initialized || typeof Notification === 'undefined') return;
+    let last: NotificationPermission | null = null;
+    const sync = () => {
+      const p = Notification.permission;
+      if (p === last) return;
+      last = p;
+      setState(prev => ({
+        ...prev,
+        permission: p,
+        subscribed: p === 'granted' ? true : p === 'denied' ? false : prev.subscribed,
+        error: p === 'granted' ? null : prev.error,
+      }));
+      if (p === 'granted' && userId) gravitecSdk()?.push(['segmentation.setAlias', userId]);
+    };
+    sync();
+    const timer = setInterval(sync, 1500);
+    const onVisible = () => sync();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [state.initialized, userId]);
 
   // Subscribe to push notifications.
   // Gravitec's registerUserForPush asks the browser for permission AND registers this device with

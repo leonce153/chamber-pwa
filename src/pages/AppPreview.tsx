@@ -7,7 +7,9 @@ import { usePWAManifest } from '@/hooks/usePWAManifest';
 import { useServiceWorker } from '@/hooks/useServiceWorker';
 import { useGravitecPush } from '@/hooks/useGravitecPush';
 import { usePushTopics, isForThisDevice } from '@/hooks/usePushTopics';
+import { hiddenNotificationIds, hideNotifications, HIDDEN_EVENT } from '@/lib/hidden-notifications';
 import { PUSH_ERRORS } from '@/lib/push-errors';
+import { NotificationHelp } from '@/components/pwa/NotificationHelp';
 import { useTheme, getAccentTextColor } from '@/hooks/useTheme';
 import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav, type NavTab } from '@/components/pwa/BottomNav';
@@ -143,9 +145,19 @@ export default function AppPreview({ appFromSubdomain }: AppPreviewProps = {}) {
     eq('status', 'sent').
     order('sent_at', { ascending: false }).
     limit(30);
-    const filtered = (data ?? []).filter((n) => !n.title.startsWith('[TEST]') && isForThisDevice(n, pushTopics.chosen)).slice(0, 20) as PanelNotification[];
+    const hidden = hiddenNotificationIds();
+    const filtered = (data ?? []).filter((n) => !n.title.startsWith('[TEST]') && !hidden.has(n.id) && isForThisDevice(n, pushTopics.chosen)).slice(0, 20) as PanelNotification[];
     setPanelNotifications(filtered);
   }, [app, pushTopics.chosen]);
+
+  useEffect(() => {
+    const onHidden = () => {
+      const hidden = hiddenNotificationIds();
+      setPanelNotifications((prev) => prev.filter((n) => !hidden.has(n.id)));
+    };
+    window.addEventListener(HIDDEN_EVENT, onHidden);
+    return () => window.removeEventListener(HIDDEN_EVENT, onHidden);
+  }, []);
 
   const handleBellClick = () => {
     setShowNotificationPanel(true);
@@ -517,6 +529,8 @@ export default function AppPreview({ appFromSubdomain }: AppPreviewProps = {}) {
               </p>
           }
 
+            {!push.subscribed && <NotificationHelp textColor={textColor} primaryColor={primaryColor} defaultOpen={!!push.error} />}
+
             {/* Topics this device follows (only when the chamber has set some up) */}
             {pushTopics.topics.length > 0 &&
           <div data-ev-id="ev_panel_topics"
@@ -592,18 +606,26 @@ export default function AppPreview({ appFromSubdomain }: AppPreviewProps = {}) {
 
             {panelNotifications.length > 0 ?
           <div data-ev-id="ev_38e20db34d" className="flex flex-col gap-3">
+                <div data-ev-id="ev_panel_list_head" className="flex justify-end">
+                  <button data-ev-id="ev_panel_clear_all"
+                onClick={() => hideNotifications(panelNotifications.map((n) => n.id))}
+                className="min-h-9 px-3 text-sm font-semibold underline underline-offset-2"
+                style={{ color: accentTextColor }}>
+                    {t('panel.clearAll')}
+                  </button>
+                </div>
                 {panelNotifications.map((notif) => {
               const openable = isOpenableUpdateUrl(notif.url);
               return (
+                <div data-ev-id="ev_panel_item" key={notif.id} className="relative">
                 <button data-ev-id="ev_942805567f"
-                key={notif.id}
                 disabled={!openable}
                 onClick={() => {
                   if (!isOpenableUpdateUrl(notif.url)) return;
                   setShowNotificationPanel(false);
                   openLink(notif.title, notif.url);
                 }}
-                className="flex items-center gap-3 p-4 min-h-11 rounded-xl text-left transition-opacity enabled:active:opacity-70 disabled:cursor-default"
+                className="w-full flex items-center gap-3 p-4 pr-12 min-h-11 rounded-xl text-left transition-opacity enabled:active:opacity-70 disabled:cursor-default"
                 style={{ backgroundColor: primaryColor + '10' }}>
                       <div data-ev-id="ev_7d1b24bf58" className="flex-1 min-w-0 flex flex-col gap-1">
                         <div data-ev-id="ev_panel_meta" className="flex items-center gap-2">
@@ -620,7 +642,15 @@ export default function AppPreview({ appFromSubdomain }: AppPreviewProps = {}) {
                         </p>
                       </div>
                       {openable && <ChevronRight className="w-5 h-5 opacity-50 shrink-0" style={{ color: textColor }} />}
-                    </button>);
+                    </button>
+                <button data-ev-id="ev_panel_item_hide"
+                onClick={() => hideNotifications([notif.id])}
+                aria-label={t('panel.hideOne')}
+                className="absolute top-1 right-1 w-11 h-11 flex items-center justify-center rounded-full opacity-60 active:opacity-100"
+                style={{ color: textColor }}>
+                  <X className="w-4 h-4" />
+                </button>
+                </div>);
             })}
               </div> :
 
