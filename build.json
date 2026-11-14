@@ -1,6 +1,6 @@
 {
-  "sha": "b9e67b89f618605e334f36cc4985da84afdd33e5",
-  "short": "b9e67b8",
-  "message": "Notification help per device, toggle sync, and clearing notifications on this phone (#9)",
-  "built_at": "2026-11-14T18:21:46Z"
+  "sha": "7375237a2722c2aed1c988f3733c9355e3a761c7",
+  "short": "7375237",
+  "message": "In-app help: install the app first, then turn on notifications (#10)",
+  "built_at": "2026-11-14T18:28:11Z"
 }
