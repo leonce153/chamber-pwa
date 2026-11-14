@@ -17,6 +17,7 @@ function functions_route(string $name): void {
     case 'get-home-events': fn_home_events($b);
     case 'get-weather': fn_weather();
     case 'cleanup-home-images': fn_cleanup_images($b);
+    case 'dashboard': fn_dashboard($b);
   }
   throw new ApiException('Unknown function', 404);
 }
