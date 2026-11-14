@@ -1,6 +1,6 @@
 {
-  "sha": "bb53acaa7e04a59372ca6fd50aedb2debbd68cd8",
-  "short": "bb53aca",
-  "message": "Let Hostinger's SSL check through the HTTPS redirect (#2)",
-  "built_at": "2026-11-14T15:30:49Z"
+  "sha": "5a403ae94060b456a5986d902d1a45e9f82c1a4e",
+  "short": "5a403ae",
+  "message": "Dashboard: encrypt saved keys with OpenSSL instead of sodium (#3)",
+  "built_at": "2026-11-14T16:17:31Z"
 }
