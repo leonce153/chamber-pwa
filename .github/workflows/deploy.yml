@@ -1,5 +1,7 @@
-# Builds the app and publishes the ready-to-serve files to the "deploy" branch.
-# Hostinger (hPanel → Advanced → GIT) pulls the "deploy" branch into the website folder.
+# Builds the app and publishes the ready-to-serve files as a new release on the "releases" branch.
+# Chamber sites do NOT pull "releases" directly: each site's Hostinger GIT pulls its own branch
+# (Muleshoe: "deploy", others: "site/<town>"), and the master dashboard moves a site's branch to
+# a release when you click Update. That is how one app, or all of them, get an update.
 name: Build and publish
 
 on:
@@ -35,20 +37,28 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Publish to the deploy branch
+      - name: Stamp the build
+        run: |
+          SUBJECT=$(git log -1 --format=%s)
+          jq -n --arg sha "$GITHUB_SHA" --arg short "${GITHUB_SHA::7}" --arg msg "$SUBJECT" --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{sha: $sha, short: $short, message: $msg, built_at: $at}' > dist/build.json
+
+      - name: Publish to the releases branch
+        env:
+          SUBJECT: ${{ github.event.head_commit.message }}
         run: |
           set -e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git ls-remote --exit-code --heads origin deploy > /dev/null; then
+          if git ls-remote --exit-code --heads origin releases > /dev/null; then
+            git fetch --depth=1 origin releases
+            git worktree add ../site origin/releases
+          else
+            # First release: continue the history of the old shared "deploy" branch
             git fetch --depth=1 origin deploy
             git worktree add ../site origin/deploy
-            git -C ../site checkout -B deploy
-          else
-            git worktree add --detach ../site
-            git -C ../site checkout --orphan deploy
-            git -C ../site rm -rf . > /dev/null
           fi
+          git -C ../site checkout -B releases
           rsync -a --delete --exclude .git dist/ ../site/
           cd ../site
           git add -A
@@ -56,5 +66,41 @@ jobs:
             echo "Nothing changed."
             exit 0
           fi
-          git commit -m "Build ${GITHUB_SHA::7}"
-          git push origin deploy
+          FIRST_LINE=$(printf '%s' "${SUBJECT:-$(git -C "$GITHUB_WORKSPACE" log -1 --format=%s)}" | head -n1 | cut -c1-120)
+          git commit -m "Build ${GITHUB_SHA::7}: ${FIRST_LINE}"
+          git push origin releases
+
+  # The master dashboard (dashboard/ folder) is plain PHP: publish it as-is to "dashboard-site",
+  # which Hostinger pulls into dashboard.chamberloop.com.
+  dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check PHP syntax
+        run: |
+          for f in $(find dashboard -name '*.php'); do php -l "$f" > /dev/null || exit 1; done
+
+      - name: Publish to the dashboard-site branch
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin dashboard-site > /dev/null; then
+            git fetch --depth=1 origin dashboard-site
+            git worktree add ../dash origin/dashboard-site
+            git -C ../dash checkout -B dashboard-site
+          else
+            git worktree add --detach ../dash
+            git -C ../dash checkout --orphan dashboard-site
+            git -C ../dash rm -rf . > /dev/null
+          fi
+          rsync -a --delete --exclude .git --exclude data/config.php dashboard/ ../dash/
+          cd ../dash
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing changed."
+            exit 0
+          fi
+          git commit -m "Dashboard ${GITHUB_SHA::7}"
+          git push origin dashboard-site

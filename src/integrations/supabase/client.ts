@@ -198,6 +198,10 @@ async function boot(): Promise<void> {
     const r = await call<{ user: ApiUser }>('/auth/verify', { token, type: hash.get('type') });
     if (!r.error && r.data?.user) {
       currentUser = r.data.user;
+      // A sign-in link from the master dashboard: drop the used token from the address bar
+      if (hash.get('type') === 'dashboard') {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
       return;
     }
   }

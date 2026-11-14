@@ -34,24 +34,29 @@ and run the setup page.
 ## 3. Connect GitHub (auto-deploy)
 
 The repository builds itself on GitHub. Every time code is pushed to `main`, GitHub Actions makes the
-ready-to-serve files and puts them on the **`deploy`** branch. Hostinger pulls that branch.
+ready-to-serve files and adds them as a new release on the **`releases`** branch. Each chamber pulls
+its **own** branch (Muleshoe: `deploy`; new chambers: `site/<town>`), and the master dashboard moves
+that branch to a release when you click Update (see [DASHBOARD.md](DASHBOARD.md)).
 
 1. Wait for the first build: open **github.com/leonce153/chamber-pwa → Actions** and check
-   *Build and publish* has a green tick. (Then a `deploy` branch exists.)
+   *Build and publish* has a green tick. (Then a `releases` branch exists.)
+   For a new chamber, create its branch first: in the dashboard, add the app with branch
+   `site/<town>` and click Update once (that creates the branch), or on GitHub make a branch
+   `site/<town>` from `releases`.
 2. In hPanel left menu: **Advanced → GIT**.
 3. Under *Private Git Repository*, click **Generate SSH Key** and copy the key it shows.
 4. In GitHub: **chamber-pwa → Settings → Deploy keys → Add deploy key**. Title `Hostinger`,
    paste the key, leave *Allow write access* **unticked**, click **Add key**.
 5. Back in hPanel → **GIT** → *Create a New Repository*:
    - Repository: `git@github.com:leonce153/chamber-pwa.git`
-   - Branch: `deploy`
+   - Branch: the chamber's own branch (`site/<town>`; Muleshoe uses `deploy`)
    - Directory: `app` (the subdomain folder inside public_html, from step 1)
    Click **Create**, then click **Deploy** on the new row.
-6. Turn on automatic updates: in the same row click **Auto Deployment**, copy the *Webhook URL*.
-   In GitHub: **chamber-pwa → Settings → Webhooks → Add webhook**, paste it into *Payload URL*,
-   content type `application/json`, *Just the push event*, **Add webhook**.
+6. In the same row click **Auto Deployment** and copy the *Webhook URL*. Paste it into the app's
+   Connection settings in the master dashboard. (No GitHub webhook is needed: the dashboard calls it
+   when you update this app.)
 
-From now on, every change pushed to `main` goes live by itself within a few minutes.
+Changes pushed to `main` become releases; they reach this chamber when you click Update in the dashboard.
 
 ## 4. Gravitec (push notifications)
 
