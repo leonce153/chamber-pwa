@@ -6,6 +6,7 @@ import { FeatureContentPreview } from '@/components/editor/FeatureContentPreview
 import { usePWAManifest } from '@/hooks/usePWAManifest';
 import { useServiceWorker } from '@/hooks/useServiceWorker';
 import { useGravitecPush } from '@/hooks/useGravitecPush';
+import { usePushTopics, isForThisDevice } from '@/hooks/usePushTopics';
 import { useTheme, getAccentTextColor } from '@/hooks/useTheme';
 import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav, type NavTab } from '@/components/pwa/BottomNav';
@@ -102,6 +103,7 @@ export default function AppPreview({ appFromSubdomain }: AppPreviewProps = {}) {
   usePWAManifest(app);
   useServiceWorker(app);
   const push = useGravitecPush(app, user?.id ?? null);
+  const pushTopics = usePushTopics(push.subscribed);
   const { isDark, toggleTheme } = useTheme();
   const { t, lang, setLang, locale } = useLanguage();
   const { period: skyPeriod, now: skyNow } = useSkyPeriod(isDark);
@@ -135,14 +137,14 @@ export default function AppPreview({ appFromSubdomain }: AppPreviewProps = {}) {
     if (!supabase || !app) return;
     const { data } = await supabase.
     from('push_notifications').
-    select('id, title, body, sent_at, url').
+    select('id, title, body, sent_at, url, topic_ids').
     eq('app_id', app.id).
     eq('status', 'sent').
     order('sent_at', { ascending: false }).
-    limit(20);
-    const filtered = (data ?? []).filter((n) => !n.title.startsWith('[TEST]')) as PanelNotification[];
+    limit(30);
+    const filtered = (data ?? []).filter((n) => !n.title.startsWith('[TEST]') && isForThisDevice(n, pushTopics.chosen)).slice(0, 20) as PanelNotification[];
     setPanelNotifications(filtered);
-  }, [app]);
+  }, [app, pushTopics.chosen]);
 
   const handleBellClick = () => {
     setShowNotificationPanel(true);
@@ -507,6 +509,49 @@ export default function AppPreview({ appFromSubdomain }: AppPreviewProps = {}) {
                 </span>
               </button>
             </div>
+
+            {/* Topics this device follows (only when the chamber has set some up) */}
+            {pushTopics.topics.length > 0 &&
+          <div data-ev-id="ev_panel_topics"
+          className="flex flex-col gap-3 p-4 rounded-xl mb-4"
+          style={{ backgroundColor: primaryColor + '15' }}>
+                <div data-ev-id="ev_panel_topics_head" className="flex flex-col gap-1">
+                  <span data-ev-id="ev_panel_topics_label" id="panel-topics-label" className="text-base font-semibold" style={{ color: textColor }}>
+                    {t('panel.topics')}
+                  </span>
+                  <span data-ev-id="ev_panel_topics_hint" className="text-sm opacity-70" style={{ color: textColor }}>
+                    {push.subscribed ? t('panel.topicsHint') : t('panel.topicsOff')}
+                  </span>
+                </div>
+                <div data-ev-id="ev_panel_topics_list" role="group" aria-labelledby="panel-topics-label" className="flex flex-col gap-1">
+                  {pushTopics.topics.map((topic) => {
+                const on = pushTopics.chosen.includes(topic.id);
+                const name = lang === 'es' && topic.name_es ? topic.name_es : topic.name;
+                const desc = lang === 'es' && topic.description_es ? topic.description_es : topic.description;
+                return (
+                  <button data-ev-id="ev_panel_topic"
+                  key={topic.id}
+                  onClick={() => pushTopics.toggle(topic.id)}
+                  disabled={!push.subscribed}
+                  role="switch"
+                  aria-checked={on}
+                  className="flex items-center justify-between gap-3 min-h-11 py-1 text-left disabled:opacity-50">
+                        <span data-ev-id="ev_panel_topic_text" className="flex-1 min-w-0">
+                          <span data-ev-id="ev_panel_topic_name" className="block text-base" style={{ color: textColor }}>{name}</span>
+                          {desc && <span data-ev-id="ev_panel_topic_desc" className="block text-sm opacity-60" style={{ color: textColor }}>{desc}</span>}
+                        </span>
+                        <span data-ev-id="ev_panel_topic_track"
+                    className="relative w-12 h-7 rounded-full transition-colors shrink-0"
+                    style={{ backgroundColor: on && push.subscribed ? primaryColor : textColor + '30' }}>
+                          <span data-ev-id="ev_panel_topic_knob"
+                      className="absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-all"
+                      style={{ left: on && push.subscribed ? '26px' : '4px' }} />
+                        </span>
+                      </button>);
+              })}
+                </div>
+              </div>
+          }
 
             {/* Language / Idioma (same setting as the EN | ES header switch) */}
             <div data-ev-id="ev_panel_language"

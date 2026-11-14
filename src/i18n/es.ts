@@ -156,5 +156,8 @@ export const es: Dictionary = {
   'panel.close': 'Cerrar notificaciones',
   'panel.push': 'Notificaciones push',
   'panel.enable': 'Activar notificaciones',
-  'panel.disable': 'Desactivar notificaciones'
+  'panel.disable': 'Desactivar notificaciones',
+  'panel.topics': 'Temas',
+  'panel.topicsHint': 'Elija sobre qué quiere recibir avisos. Las noticias importantes de la Cámara llegan a todos.',
+  'panel.topicsOff': 'Active las notificaciones para elegir temas.'
 };

@@ -154,7 +154,10 @@ export const en = {
   'panel.close': 'Close notifications',
   'panel.push': 'Push Notifications',
   'panel.enable': 'Enable notifications',
-  'panel.disable': 'Disable notifications'
+  'panel.disable': 'Disable notifications',
+  'panel.topics': 'Topics',
+  'panel.topicsHint': 'Choose what you want to hear about. Important Chamber news still comes to everyone.',
+  'panel.topicsOff': 'Turn on notifications to choose topics.'
 };
 
 export type TranslationKey = keyof typeof en;

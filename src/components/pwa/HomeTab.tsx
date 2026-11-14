@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { isForThisDevice } from '@/hooks/usePushTopics';
 import type { Tables } from '@/integrations/supabase/helpers';
 import { supabase } from '@/integrations/supabase/client';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
@@ -89,13 +90,13 @@ export function HomeTab({
     if (!supabase) return;
     const { data } = await supabase.
     from('push_notifications').
-    select('id, title, body, sent_at, url').
+    select('id, title, body, sent_at, url, topic_ids').
     eq('app_id', app.id).
     eq('status', 'sent').
     order('sent_at', { ascending: false }).
-    limit(20);
+    limit(30);
     const filtered = (data ?? []).
-    filter((n) => !n.title.startsWith('[TEST]')).
+    filter((n) => !n.title.startsWith('[TEST]') && isForThisDevice(n)).
     slice(0, 10) as UpdateItem[];
     setRecentNotifications(filtered);
   }, [app.id]);

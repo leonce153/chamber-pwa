@@ -12,6 +12,8 @@ export interface TeamMember {
   last_sign_in_at: string | null;
   invited_at: string | null;
   pending: boolean;
+  /** Senders only: topics they may send to. null = everyone. */
+  push_topic_ids: string[] | null;
 }
 
 export interface InviteResult {
@@ -59,12 +61,13 @@ export function useTeam() {
   }, [fetchMembers]);
 
   const inviteMember = useCallback(
-    async (email: string, role: TeamRole, fullName?: string): Promise<InviteResult> => {
+    async (email: string, role: TeamRole, fullName?: string, topicIds?: string[] | null): Promise<InviteResult> => {
       const res = await callTeam<{ emailSent?: boolean; inviteLink?: string | null }>({
         action: 'invite',
         email,
         role,
         fullName,
+        topicIds: topicIds ?? undefined,
         redirectTo: `${window.location.origin}/admin/accept-invite`,
       });
       if (!res.success) return { error: res.error ?? 'Could not send the invite.' };
@@ -91,5 +94,12 @@ export function useTeam() {
     return null;
   }, []);
 
-  return { members, loading, error, inviteMember, updateMemberRole, removeMember, refetch: fetchMembers };
+  const setMemberTopics = useCallback(async (userId: string, topicIds: string[] | null): Promise<string | null> => {
+    const res = await callTeam<{ push_topic_ids?: string[] | null }>({ action: 'set_topics', userId, topicIds });
+    if (!res.success) return res.error ?? 'Could not save.';
+    setMembers((prev) => prev.map((m) => (m.id === userId ? { ...m, push_topic_ids: res.push_topic_ids ?? null } : m)));
+    return null;
+  }, []);
+
+  return { members, loading, error, inviteMember, updateMemberRole, removeMember, setMemberTopics, refetch: fetchMembers };
 }

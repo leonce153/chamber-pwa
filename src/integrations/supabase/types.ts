@@ -896,6 +896,48 @@ export type Database = {
           },
         ]
       }
+      push_topics: {
+        Row: {
+          id: string
+          name: string
+          name_es: string | null
+          description: string | null
+          description_es: string | null
+          tag: string
+          position: number
+          is_visible: boolean
+          default_on: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          name_es?: string | null
+          description?: string | null
+          description_es?: string | null
+          tag: string
+          position?: number
+          is_visible?: boolean
+          default_on?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          name_es?: string | null
+          description?: string | null
+          description_es?: string | null
+          tag?: string
+          position?: number
+          is_visible?: boolean
+          default_on?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -906,6 +948,7 @@ export type Database = {
           is_owner: boolean | null
           is_super_admin: boolean | null
           role: string
+          push_topic_ids: string[] | null
           updated_at: string
         }
         Insert: {
@@ -917,6 +960,7 @@ export type Database = {
           is_owner?: boolean | null
           is_super_admin?: boolean | null
           role?: string
+          push_topic_ids?: string[] | null
           updated_at?: string
         }
         Update: {
@@ -928,6 +972,7 @@ export type Database = {
           is_owner?: boolean | null
           is_super_admin?: boolean | null
           role?: string
+          push_topic_ids?: string[] | null
           updated_at?: string
         }
         Relationships: []
@@ -944,6 +989,9 @@ export type Database = {
           sent_at: string | null
           status: string | null
           title: string
+          topic_ids: string[] | null
+          sent_by: string | null
+          sent_by_name: string | null
           url: string | null
         }
         Insert: {
@@ -957,6 +1005,9 @@ export type Database = {
           sent_at?: string | null
           status?: string | null
           title: string
+          topic_ids?: string[] | null
+          sent_by?: string | null
+          sent_by_name?: string | null
           url?: string | null
         }
         Update: {
@@ -970,6 +1021,9 @@ export type Database = {
           sent_at?: string | null
           status?: string | null
           title?: string
+          topic_ids?: string[] | null
+          sent_by?: string | null
+          sent_by_name?: string | null
           url?: string | null
         }
         Relationships: [

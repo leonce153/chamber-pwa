@@ -126,7 +126,7 @@ export function useGravitecPush(app: App | null, userId?: string | null): Gravit
       if (userId) {
         const gravitec = window.Gravitec;
         if (gravitec && !Array.isArray(gravitec) && typeof gravitec.push === 'function') {
-          gravitec.push(['setAlias', userId]);
+          gravitec.push(['segmentation.setAlias', userId]);
         }
       }
       setState(prev => ({ ...prev, subscribed: true, loading: false }));
