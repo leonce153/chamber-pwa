@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/events.php';
 require_once __DIR__ . '/weather.php';
+require_once __DIR__ . '/push.php';
 
 function functions_route(string $name): void {
   $b = json_body();
@@ -26,78 +27,6 @@ function fn_fail(string $error, int $status): void {
   json_out(['success' => false, 'error' => $error], $status);
 }
 
-// ===================== Push (Gravitec) =====================
-
-function gravitec_send(array $payload): array {
-  $key = (string) config('gravitec.app_key', '');
-  $secret = (string) config('gravitec.app_secret', '');
-  if ($key === '' || $secret === '') {
-    throw new ApiException('Push notifications are not set up yet. Add the Gravitec App Key and App Secret on the setup page.', 500);
-  }
-  [$status, $text] = http_request('POST', 'https://uapi.gravitec.net/api/v3/push', [
-    'Content-Type: application/json',
-    'Authorization: Basic ' . base64_encode("$key:$secret"),
-  ], json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 20);
-  $json = json_decode($text, true);
-  if ($status < 200 || $status >= 300) {
-    log_error("Gravitec $status: $text");
-    throw new ApiException("Gravitec API error ($status): $text", 400);
-  }
-  return is_array($json) ? $json : ['raw' => $text];
-}
-
-function push_icon(): ?string {
-  $s = db()->query('SELECT icon_url, logo_url FROM app_settings LIMIT 1')->fetch() ?: [];
-  $icon = $s['icon_url'] ?? null ?: ($s['logo_url'] ?? null);
-  if ($icon && str_starts_with($icon, '/')) $icon = site_url() . $icon;
-  return $icon ?: null;
-}
-
-function fn_send_push(array $b): void {
-  require_role('sender', 'You do not have permission to send notifications');
-  $id = (string) ($b['notificationId'] ?? '');
-  $title = trim((string) ($b['title'] ?? ''));
-  $body = trim((string) ($b['body'] ?? ''));
-  $url = trim((string) ($b['url'] ?? ''));
-  $test = !empty($b['testMode']);
-  if (!$id || $title === '' || $body === '') fn_fail('notificationId, title, and body are required', 400);
-
-  $st = db()->prepare('SELECT id FROM push_notifications WHERE id = ?');
-  $st->execute([$id]);
-  if (!$st->fetch()) fn_fail('Notification not found', 404);
-
-  $redirect = ($url !== '' && $url !== 'https://' && preg_match('#^https?://#i', $url)) ? $url : site_url();
-  $payload = ['payload' => array_filter([
-    'title' => mb_substr($title, 0, 120),
-    'message' => mb_substr($body, 0, 500),
-    'redirect_url' => $redirect,
-    'icon' => push_icon(),
-  ])];
-  if ($test) {
-    $me = actor()['id'];
-    if (!$me) fn_fail('Sign in as a team member to send a test.', 400);
-    $payload['filter'] = ['alias' => [$me]];
-  } else {
-    $payload['sendToAll'] = true;
-  }
-
-  try {
-    $res = gravitec_send($payload);
-  } catch (ApiException $e) {
-    fn_fail($e->getMessage(), $e->status);
-  } catch (Throwable $e) {
-    fn_fail('Failed to connect to Gravitec push service: ' . $e->getMessage(), 502);
-  }
-  if ($test && isset($res['recipients']) && (int) $res['recipients'] === 0) {
-    fn_fail('Subscribe to notifications in the app first, then send a test.', 400);
-  }
-  if (!$test) {
-    db()->prepare('UPDATE push_notifications SET status = ?, sent_at = ?, gravitec_push_id = ?, recipients_count = ? WHERE id = ?')
-      ->execute(['sent', now_sql(), isset($res['taskId']) ? (string) $res['taskId'] : (isset($res['id']) ? (string) $res['id'] : null), (int) ($res['recipients'] ?? 0), $id]);
-  }
-  json_out(['success' => true, 'message' => 'Push notification sent successfully', 'gravitecResponse' => $res]);
-}
-
 // ===================== Team =====================
 
 function fn_manage_team(array $b): void {
@@ -108,11 +37,12 @@ function fn_manage_team(array $b): void {
   $redirectTo = isset($b['redirectTo']) && is_string($b['redirectTo']) ? $b['redirectTo'] : null;
 
   if ($action === 'list') {
-    $rows = db()->query("SELECT p.id, p.email, p.full_name, p.role, p.created_at, u.last_sign_in_at, u.invited_at FROM profiles p JOIN auth_users u ON u.id = p.id WHERE p.role IN ('owner','editor','sender') ORDER BY p.created_at")->fetchAll();
+    $rows = db()->query("SELECT p.id, p.email, p.full_name, p.role, p.push_topic_ids, p.created_at, u.last_sign_in_at, u.invited_at FROM profiles p JOIN auth_users u ON u.id = p.id WHERE p.role IN ('owner','editor','sender') ORDER BY p.created_at")->fetchAll();
     $members = array_map(fn($r) => [
       'id' => $r['id'], 'email' => $r['email'], 'full_name' => $r['full_name'], 'role' => $r['role'],
       'created_at' => from_sql_ts($r['created_at']), 'last_sign_in_at' => from_sql_ts($r['last_sign_in_at']),
       'invited_at' => from_sql_ts($r['invited_at']), 'pending' => !$r['last_sign_in_at'],
+      'push_topic_ids' => $r['push_topic_ids'] === null ? null : (json_decode((string) $r['push_topic_ids'], true) ?: []),
     ], $rows);
     json_out(['success' => true, 'members' => $members]);
   }
@@ -138,6 +68,11 @@ function fn_manage_team(array $b): void {
       if ($sendLink) db()->prepare('UPDATE auth_users SET invited_at = ? WHERE id = ?')->execute([now_sql(), $id]);
     } else {
       $id = create_user($email, null, $role, $name ?: null, true);
+    }
+
+    if ($role === 'sender' && isset($b['topicIds']) && is_array($b['topicIds'])) {
+      $ids = array_values(array_intersect(array_unique(array_filter($b['topicIds'], 'is_string')), array_keys(push_topics_all())));
+      if ($ids) db()->prepare('UPDATE profiles SET push_topic_ids = ? WHERE id = ?')->execute([json_encode($ids), $id]);
     }
 
     $emailSent = false;
@@ -166,6 +101,22 @@ function fn_manage_team(array $b): void {
     if ($cur === 'owner' && $role !== 'owner' && $countOwners() <= 1) fn_fail('There must be at least one owner.', 400);
     db()->prepare('UPDATE profiles SET role = ?, is_owner = ?, updated_at = ? WHERE id = ?')->execute([$role, $role === 'owner' ? 1 : 0, now_sql(), $id]);
     json_out(['success' => true]);
+  }
+
+  if ($action === 'set_topics') {
+    // topicIds: null = may send to everyone; [ids] = only those topics.
+    $id = (string) ($b['userId'] ?? '');
+    $st = db()->prepare('SELECT role FROM profiles WHERE id = ?');
+    $st->execute([$id]);
+    if ($st->fetchColumn() === false) fn_fail('Team member not found.', 404);
+    $ids = null;
+    if (array_key_exists('topicIds', $b) && $b['topicIds'] !== null) {
+      $known = array_keys(push_topics_all());
+      $ids = array_values(array_intersect(array_unique(array_filter((array) $b['topicIds'], 'is_string')), $known));
+      if (!$ids) fn_fail('Pick at least one topic, or choose Everyone.', 400);
+    }
+    db()->prepare('UPDATE profiles SET push_topic_ids = ?, updated_at = ? WHERE id = ?')->execute([$ids === null ? null : json_encode($ids), now_sql(), $id]);
+    json_out(['success' => true, 'push_topic_ids' => $ids]);
   }
 
   if ($action === 'remove') {

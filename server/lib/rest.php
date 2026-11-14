@@ -33,9 +33,14 @@ function table_rules(): array {
     'app_analytics' => ['read' => 'sender', 'write' => 'owner'],
     'app_collaborators' => ['read' => 'editor', 'write' => 'owner'],
     'push_notifications' => [
-      'read' => 'sender', 'write' => 'sender',
+      // Senders write through /api/functions/send-push-notification, which checks their topics.
+      'read' => 'sender', 'write' => 'editor',
       // Visitors see notifications that were actually sent (the "Latest from the Chamber" card).
-      'public_read' => [fn() => [['status', 'eq', 'sent']], ['id', 'app_id', 'title', 'body', 'url', 'sent_at', 'icon_url', 'created_at', 'status']],
+      'public_read' => [fn() => [['status', 'eq', 'sent']], ['id', 'app_id', 'title', 'body', 'url', 'sent_at', 'icon_url', 'created_at', 'status', 'topic_ids']],
+    ],
+    'push_topics' => [
+      'read' => 'sender', 'write' => 'owner',
+      'public_read' => [$visible, ['id', 'name', 'name_es', 'description', 'description_es', 'tag', 'position', 'is_visible', 'default_on']],
     ],
     'profiles' => ['read' => 'owner', 'write' => 'owner', 'insert' => 'owner', 'delete' => 'owner'],
     'home_sections' => ['read' => 'editor', 'write' => 'editor', 'public_read' => [$visible, null]],
