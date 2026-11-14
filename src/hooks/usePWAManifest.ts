@@ -37,7 +37,8 @@ export function usePWAManifest(app: App | null) {
       name: app.name || 'PWA App',
       short_name: (app.name || 'App').slice(0, 12),
       description: app.description || `${app.name} - Progressive Web App`,
-      start_url: '/',
+      // Absolute: inside a blob: manifest a bare '/' is invalid and Chrome won't install the app.
+      start_url: window.location.origin + '/',
       display: 'standalone',
       orientation: 'portrait',
       theme_color: app.theme_color || '#6366f1',
@@ -48,23 +49,24 @@ export function usePWAManifest(app: App | null) {
       icons: generateIcons(app.homepage_image_url),
     };
 
+    // The server's /manifest.json (built from this chamber's settings) is the real one. Replacing it
+    // with a blob: copy broke Android installs, so only fill in when the page has no manifest.
+    const existing = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+    const useServerManifest = !!existing && !existing.href.startsWith('blob:');
+
     // Create blob URL for manifest
     const manifestBlob = new Blob([JSON.stringify(manifest)], {
       type: 'application/json',
     });
     const manifestUrl = URL.createObjectURL(manifestBlob);
 
-    // Remove any existing manifest link
-    const existingManifest = document.querySelector('link[rel="manifest"]');
-    if (existingManifest) {
-      existingManifest.remove();
+    if (!useServerManifest) {
+      existing?.remove();
+      const manifestLink = document.createElement('link');
+      manifestLink.rel = 'manifest';
+      manifestLink.href = manifestUrl;
+      document.head.appendChild(manifestLink);
     }
-
-    // Add new manifest link
-    const manifestLink = document.createElement('link');
-    manifestLink.rel = 'manifest';
-    manifestLink.href = manifestUrl;
-    document.head.appendChild(manifestLink);
 
     // Update theme-color meta tag (matches the header color for the current light/dark mode)
     let themeColorMeta = document.querySelector('meta[name="theme-color"]');
