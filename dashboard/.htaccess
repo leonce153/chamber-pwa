@@ -4,6 +4,8 @@ DirectoryIndex index.php
 
 <IfModule mod_rewrite.c>
 RewriteEngine On
+# Let Hostinger's SSL check (Let's Encrypt) reach the site over plain http
+RewriteCond %{REQUEST_URI} !^/\.well-known/
 RewriteCond %{HTTPS} !=on
 RewriteCond %{HTTP:X-Forwarded-Proto} !=https
 RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)
