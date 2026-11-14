@@ -78,7 +78,7 @@ export const es: Dictionary = {
   'alerts.step2b': 'Agregar a pantalla de inicio',
   'alerts.step3a': 'Abra la app desde su pantalla de inicio y toque',
   'alerts.step3b': 'Activar',
-  'alerts.safariNote': 'Primero abra esta página en Safari. Otros navegadores de iPhone no pueden agregar apps a la pantalla de inicio.',
+  'alerts.safariNote': '¿Usa Chrome? Toque el botón Compartir arriba a la derecha de la barra de direcciones y luego Agregar a pantalla de inicio. ¿No aparece? Abra esta página en Safari.',
   'alerts.turningOn': 'Activando…',
   'alerts.turnOn': 'Activar',
   'alerts.notNow': 'Ahora no',
@@ -97,6 +97,8 @@ export const es: Dictionary = {
   'type.emergency': 'Alerta de emergencia',
   'type.update': 'Novedad',
   'home.emptyTitle': 'Todo tranquilo por aquí.',
+  'panel.clearAll': 'Borrar todo',
+  'panel.hideOne': 'Quitar de este teléfono',
   'home.emptyDesc': 'Aquí aparecerán las noticias y eventos de la Cámara.',
   'home.footer': 'Muleshoe, Texas · Hogar del National Mule Memorial',
 
