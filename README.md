@@ -19,7 +19,9 @@ each chamber has its own site, database, admin and Gravitec account.
 | `public/server/presets/` | Starting values per chamber for the setup page. |
 | `public/install.php` | Setup page (first run) and owner-only server settings afterwards. |
 | `public/index.php`, `manifest.php`, `push-worker.php` | App shell, manifest and service worker filled in with the chamber's name, icons and Gravitec key. |
-| `.github/workflows/deploy.yml` | Builds on every push to `main` and publishes the result to the `deploy` branch that Hostinger pulls. |
+| `.github/workflows/deploy.yml` | Builds on every push to `main` and publishes it as a release on the `releases` branch; also publishes `dashboard/` to `dashboard-site`. |
+| `dashboard/` | The master dashboard that manages all chamber apps (see `docs/DASHBOARD.md`). |
+| `public/server/lib/dashboard.php` | The app side of the dashboard: sign-in links, database updates, content copy. |
 
 Secrets (database password, Gravitec secret, API key) are typed on the setup page and saved only in
 `data/config.php` on the server. They are never in this repository.

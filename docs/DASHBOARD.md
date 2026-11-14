@@ -1,0 +1,78 @@
+# Master dashboard
+
+`dashboard/` is a small PHP site (live at **https://dashboard.chamberloop.com**) that manages every
+chamber app from one login:
+
+- **Apps**: each app's status, version, banner views/taps, pushes sent and last push.
+- **Open admin**: signs you straight into an app's `/admin` with a one-time link (good for 3 minutes).
+- **Push**: send one notification to one app, several, or all of them.
+- **Template**: copy the template app's Home screen, a single Home section, or its tabs to one app or
+  all apps. The app's current version is backed up first; restore it from that app's page.
+- **Updates**: move one app, or all of them, to a release (or back to an older one). The app pulls it
+  from GitHub, then its database updates run.
+- **Activity**: everything the dashboard did, and what failed.
+
+## How releases reach each app
+
+```
+push to main ──► GitHub Action builds ──► new commit on "releases"  ("Build abc1234: what changed")
+                                               │
+         Dashboard → Update (one app or many)  ▼
+  app's own branch (Muleshoe: deploy, others: site/<town>) gets a commit with that release's files
+                                               │
+         Dashboard calls the app's Hostinger deploy webhook ──► Hostinger pulls the branch
+                                               │
+         Dashboard waits until /api/health shows the new build, then runs the database updates
+```
+
+Nothing reaches an app until you click Update for it. A rollback is just an update to an older
+release (it is added as a new commit, so Hostinger's normal pull picks it up).
+
+`releases` also carries `build.json` (`sha`, `short`, `message`, `built_at`), which each app reports
+in `/api/health` and `/api/site`.
+
+## What each app needs in the dashboard
+
+| Field | Where to find it |
+| --- | --- |
+| App address | e.g. `https://app.muleshoetxchamber.com` |
+| Dashboard API key | the app's `/install.php` → *Dashboard API key* → Show key |
+| GitHub branch | the branch in the app's hPanel GIT row (`deploy` for Muleshoe, `site/<town>` for new ones) |
+| Hostinger deploy webhook | hPanel → that website → Advanced → GIT → *Auto Deployment* → Webhook URL |
+
+## The template app
+
+The template is an ordinary chamber app (for example `template.chamberloop.com`) with its own admin.
+Edit it like any chamber, then copy from it on the **Template** screen. Tick *This is the template app*
+in its Connection settings. Copies keep the same ids, so copying one section again later replaces
+that section on every app that already has it, and adds it where it's missing.
+
+Copied images are downloaded from the template and saved on each app. Banner view/tap counts
+start at zero. App settings (name, colors, logo, push keys) are never copied.
+
+## The app-side API the dashboard uses
+
+`POST /api/functions/dashboard` (API key only; a signed-in user gets 403):
+
+- `{ "action": "login_link", "email": "…" }` → `{ url }` one-time sign-in link for that owner
+  (falls back to the first owner).
+- `{ "action": "migrate" }` → `{ log, build }` applies database updates.
+- `{ "action": "export", "group": "home" | "tabs", "section_id"? }` → `{ rows, site_url }`
+- `{ "action": "import", "group", "rows", "source_url", "section_id"? }` replaces that group (or one
+  Home section) in one transaction and copies images from `source_url`.
+
+## Setting up the dashboard site
+
+1. hPanel: website `dashboard.chamberloop.com`, a MySQL database, and a GIT row:
+   repository `git@github.com:leonce153/chamber-pwa.git`, branch **`dashboard-site`**, directory empty.
+2. `data/config.php` on the server holds the database login (written by `setup.php` or placed there).
+3. Open `https://dashboard.chamberloop.com/setup.php` and create your login.
+4. Settings → paste a fine-grained GitHub token (only `chamber-pwa`, *Contents: Read and write*).
+5. Apps → Add an app for each chamber.
+
+The dashboard code deploys itself: every push to `main` republishes `dashboard/` to the
+`dashboard-site` branch. Its own database tables are created by `setup.php`; Settings →
+*Apply dashboard database updates* adds new ones after a dashboard change.
+
+Forgot the dashboard password? Delete the row in its `users` table (hPanel → phpMyAdmin) and open
+`/setup.php` again.

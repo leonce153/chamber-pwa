@@ -7,7 +7,7 @@
  *   POST /api/rest                   table reads/writes (see server/lib/rest.php)
  *   GET  /api/auth/me, POST /api/auth/{login,logout,verify,recover,update}
  *   POST /api/storage/{upload,remove,list}
- *   POST /api/functions/{send-push-notification,manage-team,banner-stats,get-home-events,get-weather,cleanup-home-images}
+ *   POST /api/functions/{send-push-notification,manage-team,banner-stats,get-home-events,get-weather,cleanup-home-images,dashboard}
  *
  * Browsers use the session cookie. A central dashboard sends "X-Api-Key: <api_key from setup>".
  */
@@ -19,6 +19,7 @@ require_once __DIR__ . '/../server/lib/auth.php';
 require_once __DIR__ . '/../server/lib/rest.php';
 require_once __DIR__ . '/../server/lib/storage.php';
 require_once __DIR__ . '/../server/lib/functions.php';
+require_once __DIR__ . '/../server/lib/dashboard.php';
 
 header('Cache-Control: no-store');
 header('Referrer-Policy: same-origin');
@@ -52,7 +53,7 @@ try {
   switch ($parts[0] ?? '') {
     case 'health':
       db()->query('SELECT 1');
-      json_out(['ok' => true, 'installed' => true, 'app' => app_name(), 'version' => APP_VERSION]);
+      json_out(['ok' => true, 'installed' => true, 'app' => app_name(), 'version' => APP_VERSION, 'build' => build_info()]);
     case 'site':
       require_role('owner');
       json_out(['data' => site_summary()]);
@@ -95,5 +96,6 @@ function site_summary(): array {
     'last_notification' => $last ? ['title' => $last['title'], 'sent_at' => from_sql_ts($last['sent_at']), 'recipients' => (int) $last['recipients_count']] : null,
     'push_configured' => (bool) config('gravitec.app_key') && (bool) config('gravitec.app_secret'),
     'version' => APP_VERSION,
+    'build' => build_info(),
   ];
 }

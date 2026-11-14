@@ -1,0 +1,23 @@
+# Chamber master dashboard — Apache / LiteSpeed rules (Hostinger)
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+RewriteRule ^(data|lib)(/|$) - [F,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set Referrer-Policy "same-origin"
+  Header always set X-Robots-Tag "noindex, nofollow"
+</IfModule>
+
+<FilesMatch "\.(md|sql|log|lock|ini|sh)$">
+  Require all denied
+</FilesMatch>
