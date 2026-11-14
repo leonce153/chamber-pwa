@@ -181,7 +181,25 @@ const SCHEMA = [
     'sent_at' => ['ts', null, true],
     'recipients_count' => ['int', 0, true],
     'gravitec_push_id' => ['text', null, true],
+    // Topics this went to (push_topics ids). Empty = everyone.
+    'topic_ids' => ['array', [], true],
+    'sent_by' => ['uuid', null, true],
+    'sent_by_name' => ['text', null, true],
     'created_at' => ['ts', 'now', false],
+  ],
+  // Topics subscribers can follow (e.g. City news, County alerts). Each is a Gravitec tag.
+  'push_topics' => [
+    'id' => ['uuid', 'uuid', false],
+    'name' => ['text', null, false],
+    'name_es' => ['text', null, true],
+    'description' => ['text', null, true],
+    'description_es' => ['text', null, true],
+    'tag' => ['key', null, false],
+    'position' => ['int', 0, false],
+    'is_visible' => ['bool', true, false],
+    'default_on' => ['bool', true, false],
+    'created_at' => ['ts', 'now', false],
+    'updated_at' => ['ts', 'now', false],
   ],
   'profiles' => [
     'id' => ['uuid', 'uuid', false],
@@ -191,6 +209,8 @@ const SCHEMA = [
     'role' => ['text', 'none', false],
     'is_owner' => ['bool', false, true],
     'is_super_admin' => ['bool', false, true],
+    // Senders only: topics they may send to. NULL = everyone (all subscribers and every topic).
+    'push_topic_ids' => ['array', null, true],
     'created_at' => ['ts', 'now', false],
     'updated_at' => ['ts', 'now', false],
   ],
@@ -310,6 +330,7 @@ const SCHEMA_INDEXES = [
   'feature_rss_feeds' => [['feature_rss_feature', ['feature_id'], false]],
   'feature_custom_pages' => [['feature_pages_feature', ['feature_id'], false]],
   'push_notifications' => [['push_app_created', ['app_id', 'created_at'], false]],
+  'push_topics' => [['push_topics_tag', ['tag'], true]],
   'home_sections' => [['home_sections_position', ['position'], false]],
   'home_section_items' => [['home_items_section', ['section_id', 'position'], false]],
   'home_banner_slides' => [['home_slides_section', ['section_id', 'position'], false]],
@@ -323,7 +344,7 @@ const SCHEMA_INDEXES = [
 /** Tables the browser (and the dashboard API) may reach through /api/rest. */
 const PUBLIC_TABLES = [
   'app_settings', 'apps', 'app_features', 'feature_links', 'feature_rss_feeds', 'feature_custom_pages',
-  'app_users', 'app_analytics', 'app_collaborators', 'push_notifications', 'profiles',
+  'app_users', 'app_analytics', 'app_collaborators', 'push_notifications', 'push_topics', 'profiles',
   'home_sections', 'home_section_items', 'home_banner_slides', 'home_gallery_photos', 'home_image_cleanup',
 ];
 
