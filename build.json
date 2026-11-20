@@ -1,6 +1,6 @@
 {
-  "sha": "7375237a2722c2aed1c988f3733c9355e3a761c7",
-  "short": "7375237",
-  "message": "In-app help: install the app first, then turn on notifications (#10)",
-  "built_at": "2026-11-14T18:28:11Z"
+  "sha": "b95838ba55ba6a1f24ab7ff9461b6bc0cc0ca38b",
+  "short": "b95838b",
+  "message": "Dashboard: add \"Forgot your password?\" with an emailed reset link (#12)",
+  "built_at": "2026-11-20T16:54:42Z"
 }
