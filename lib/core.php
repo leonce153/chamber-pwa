@@ -68,6 +68,13 @@ const DASH_TABLES = [
   'ask_log' => "id INT AUTO_INCREMENT PRIMARY KEY, question TEXT NOT NULL, answer MEDIUMTEXT NULL, doc_ids VARCHAR(255) NULL, ok TINYINT(1) NOT NULL DEFAULT 1, created_at DATETIME NOT NULL",
 ];
 
+/** Run migrate() once after each dashboard update, so new tables exist without a manual click. */
+function ensure_schema(): void {
+  if (setting('schema_version') === DASH_VERSION) return;
+  migrate();
+  set_setting('schema_version', DASH_VERSION);
+}
+
 function migrate(): array {
   $log = [];
   foreach (DASH_TABLES as $t => $def) {

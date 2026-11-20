@@ -8,6 +8,7 @@
 declare(strict_types=1);
 require __DIR__ . '/lib/core.php';
 require __DIR__ . '/lib/hq.php';
+ensure_schema();
 
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
