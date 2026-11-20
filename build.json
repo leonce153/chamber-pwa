@@ -1,6 +1,6 @@
 {
-  "sha": "d1e77682984e1f92cc29872607ab9bf1407dc736",
-  "short": "d1e7768",
-  "message": "HQ: label the snapshot version as the connector's, not the template's (#15)",
-  "built_at": "2026-11-20T18:50:57Z"
+  "sha": "3b008b38d7a476ef65c0b95a5589964daf58b1a1",
+  "short": "3b008b3",
+  "message": "Build: ask Hostinger to deploy the dashboard after dashboard-site is updated (#16)",
+  "built_at": "2026-11-20T19:07:54Z"
 }
