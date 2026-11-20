@@ -104,3 +104,20 @@ jobs:
           fi
           git commit -m "Dashboard ${GITHUB_SHA::7}"
           git push origin dashboard-site
+
+      # Tell Hostinger to pull dashboard-site now that it's updated. Uses the Auto Deployment
+      # webhook URL from hPanel → GIT, saved as the repository secret DASHBOARD_DEPLOY_HOOK.
+      # (A repository webhook fires on every push, often before dashboard-site is ready.)
+      - name: Ask Hostinger to deploy the dashboard
+        env:
+          HOOK: ${{ secrets.DASHBOARD_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then echo "DASHBOARD_DEPLOY_HOOK is not set; deploy from hPanel."; exit 0; fi
+          sleep 5
+          for i in 1 2 3; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$HOOK" || true)
+            echo "Hostinger answered $code"
+            case "$code" in 2*) exit 0;; esac
+            sleep 20
+          done
+          echo "::warning::Hostinger did not accept the deploy request; deploy from hPanel."

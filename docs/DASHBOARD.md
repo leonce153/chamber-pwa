@@ -76,7 +76,10 @@ start at zero. App settings (name, colors, logo, push keys) are never copied.
    (see [HQ.md](HQ.md)).
 
 The dashboard code deploys itself: every push to `main` republishes `dashboard/` to the
-`dashboard-site` branch. Its own database tables are created by `setup.php`; Settings →
+`dashboard-site` branch. To have Hostinger pull it automatically, turn on Auto Deployment in hPanel →
+GIT, and save its webhook URL as the GitHub repository secret `DASHBOARD_DEPLOY_HOOK`
+(Settings → Secrets and variables → Actions). The build calls it once `dashboard-site` is updated.
+Don't add that URL as a repository webhook too: those fire on every push, before the branch is ready. Its own database tables are created by `setup.php`; Settings →
 *Apply dashboard database updates* adds new ones after a dashboard change.
 
 Forgot the dashboard password? Click **Forgot your password?** on the sign-in page. A link good for
