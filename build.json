@@ -1,6 +1,6 @@
 {
-  "sha": "f86fbc48f579596f92ae5adee56ce7e71fe90a2a",
-  "short": "f86fbc4",
-  "message": "Dashboard: one-click \"update now\" on app cards; rename Push to Notifications (#14)",
-  "built_at": "2026-11-20T18:19:01Z"
+  "sha": "d1e77682984e1f92cc29872607ab9bf1407dc736",
+  "short": "d1e7768",
+  "message": "HQ: label the snapshot version as the connector's, not the template's (#15)",
+  "built_at": "2026-11-20T18:50:57Z"
 }
