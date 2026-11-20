@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 const HQ_ACTIONS = ['chamber_save', 'chamber_refresh', 'chamber_delete', 'org_save', 'org_delete', 'contact_save', 'contact_delete',
   'lead_quick', 'lead_save', 'lead_stage', 'lead_delete', 'lead_to_chamber', 'note_add', 'task_save', 'task_done', 'task_delete',
-  'doc_save', 'doc_delete', 'ask', 'ask_save_doc', 'hq_settings'];
+  'doc_save', 'doc_delete', 'ask', 'ask_save_doc', 'hq_settings', 'sm_import'];
 const HQ_SCREENS = ['home', 'chambers', 'chamber', 'chamber_new', 'leads', 'lead', 'contacts', 'contact', 'orgs', 'org',
   'tasks', 'docs', 'doc', 'doc_edit', 'ask'];
 
@@ -347,6 +347,28 @@ function hq_action(string $p, array $user): void {
     }
 
     // ---------- settings ----------
+    case 'sm_import': {
+      require_once __DIR__ . '/setup_import.php';
+      $f = $_FILES['sm_file'] ?? null;
+      if (!$f || ($f['error'] ?? 1) !== UPLOAD_ERR_OK || ($f['size'] ?? 0) > 5_000_000) {
+        flash('Choose the Setup Manager export file (.json) first.', 'err');
+        redirect('index.php?p=settings');
+      }
+      $data = json_decode((string) file_get_contents($f['tmp_name']), true);
+      try {
+        if (!is_array($data)) throw new InvalidArgumentException('That file is not valid JSON.');
+        db()->beginTransaction();
+        $log = setup_manager_import($data);
+        db()->commit();
+        log_activity(null, 'Imported Setup Manager data', implode('; ', $log));
+        flash('Imported: ' . implode('. ', $log) . '.');
+      } catch (Throwable $e) {
+        if (db()->inTransaction()) db()->rollBack();
+        flash('Import failed: ' . $e->getMessage(), 'err');
+      }
+      redirect('index.php?p=settings');
+    }
+
     case 'hq_settings': {
       $k = trim((string) ($_POST['openai_api_key'] ?? ''));
       if ($k !== '') set_setting('openai_api_key', seal($k));
@@ -1154,6 +1176,16 @@ function hq_settings_cards(): void {
     <p><code class="mono wrap"><?= h($base . '/lead_hook.php?key=' . $secret) ?></code></p>
     <p class="small muted">Fields: <span class="mono">name, email, organization, phone, role, member_count, interests, notes, source, pipeline</span> ("chamber" or "sponsor").</p>
     <form method="post" action="index.php?p=hq_settings" class="confirm" data-confirm="Make a new address? The old one stops working."><?= csrf_field() ?><input type="hidden" name="new_lead_secret" value="1"><button class="small">Make a new address</button></form>
+  </section>
+  <section class="card">
+    <h2>Import from Setup Manager</h2>
+    <p class="muted">Brings the old Base44 Setup Manager's chambers, launch checklists and release history into HQ: chamber details and contacts, open checklist items as tasks, and the full records as docs in the "Setup Manager" folder. Running it again updates the docs and adds nothing twice.</p>
+    <?php if ($last = setting('sm_import_last')): ?><p class="small muted">Last imported <?= h(ago($last)) ?>.</p><?php endif; ?>
+    <form method="post" action="index.php?p=sm_import" enctype="multipart/form-data" class="stack">
+      <?= csrf_field() ?>
+      <label>Export file (.json) <input type="file" name="sm_file" accept=".json,application/json" required></label>
+      <button class="primary">Import</button>
+    </form>
   </section>
   <section class="card">
     <h2>Chamber checks</h2>

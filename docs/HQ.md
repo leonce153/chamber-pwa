@@ -97,6 +97,20 @@ Content-Type: application/json
   **New** with "Reply to the new lead" due tomorrow, and logs the details as a note.
 - Answers `201 {"ok":true,"deal_id":12}`; `401` wrong key; `422` no name, email or organization.
 
+## Import from the Setup Manager
+
+Settings → **Import from Setup Manager** takes the JSON export of the old Base44 "ChamberLoop Setup
+Manager" app (`setup-manager-for-hq.json`) and brings in:
+
+- each real chamber (samples and QA records are skipped): matched by Base44 app id, else by name;
+  only blank fields are filled (town, state, site, app id, organization). It also adds the chamber's
+  organization and contact to the CRM.
+- the chamber's open launch-checklist items as HQ tasks, and a note on the chamber (first import only).
+- the full setup record (notes, features, open items, upgrade packages) and the core template
+  release history as docs in the **Setup Manager** folder (updated in place on a re-run).
+
+Running it again adds nothing twice. After the import the Setup Manager app can be retired.
+
 ## Ask HQ
 
 Settings → Ask HQ: paste an OpenAI API key (stored encrypted) and pick a model (default
@@ -110,6 +124,6 @@ New tables (created by Settings → *Apply dashboard database updates*): `chambe
 
 ## Coming next
 
-Connector function in the Base44 core template; import from the Setup Manager; email
+Email
 announcements from info@chamberloop.com; two-step sign-in; Stripe billing (test mode first); AI
 cost per chamber from the OpenAI admin key; reports.
