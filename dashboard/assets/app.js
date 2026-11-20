@@ -116,4 +116,6 @@
       run.disabled = false; sel.disabled = false;
     });
   });
+  // "Update now" on an app card lands here with that app ticked: start straight away (still asks to confirm).
+  if (run.getAttribute('data-autostart')) setTimeout(function () { run.click(); }, 300);
 })();

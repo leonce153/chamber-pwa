@@ -268,7 +268,7 @@ function page_start(string $title, string $active = ''): void {
     'settings' => ['index.php?p=settings', 'Settings'],
   ];
   // The PWA screens share one menu item and show their own sub-menu
-  $pwaTabs = ['pwas' => 'Apps', 'updates' => 'Updates', 'push' => 'Push', 'template' => 'Template'];
+  $pwaTabs = ['pwas' => 'Apps', 'updates' => 'Updates', 'push' => 'Notifications', 'template' => 'Template'];
   $sub = isset($pwaTabs[$active]) ? $active : null;
   if ($sub) $active = 'pwas';
   ?><!doctype html>

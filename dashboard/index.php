@@ -194,10 +194,15 @@ function latest_release_safe(): ?array {
   }
 }
 
-function build_badge(?array $build, ?array $latest): string {
+function build_badge(?array $build, ?array $latest, ?int $appId = null): string {
   if (!$build) return '<span class="badge gray">version unknown</span>';
   $s = '<span class="mono">' . h($build['short'] ?? '?') . '</span>';
-  if ($latest && ($build['short'] ?? '') !== $latest['short']) return $s . ' <span class="badge warn">update available</span>';
+  if ($latest && ($build['short'] ?? '') !== $latest['short']) {
+    // With an app id the badge is a one-click update: it opens Updates with that app ticked and starts.
+    return $s . ($appId
+      ? ' <a class="badge warn" href="index.php?p=updates&only=' . $appId . '&go=1" title="Update this app to ' . h($latest['short']) . '">Update available · update now</a>'
+      : ' <span class="badge warn">update available</span>');
+  }
   if ($latest) return $s . ' <span class="badge ok">up to date</span>';
   return $s;
 }
@@ -444,13 +449,13 @@ switch ($p) {
           </header>
           <?php if ($s['ok']): ?>
             <dl class="stats">
-              <div><dt>Pushes sent</dt><dd><?= (int) ($c['notifications_sent'] ?? 0) ?></dd></div>
+              <div><dt>Notifications sent</dt><dd><?= (int) ($c['notifications_sent'] ?? 0) ?></dd></div>
               <div><dt>Banner views</dt><dd><?= number_format((int) ($c['banner_views'] ?? 0)) ?></dd></div>
               <div><dt>Banner taps</dt><dd><?= number_format((int) ($c['banner_taps'] ?? 0)) ?></dd></div>
               <div><dt>Team</dt><dd><?= (int) ($c['team_members'] ?? 0) ?></dd></div>
             </dl>
-            <p class="small">Version <?= build_badge($d['build'] ?? null, $latest) ?></p>
-            <p class="small muted">Last push: <?= !empty($d['last_notification']) ? h($d['last_notification']['title']) . ' · ' . ago($d['last_notification']['sent_at']) : 'none yet' ?><?= empty($d['push_configured']) ? ' · <span class="badge warn">push not set up</span>' : '' ?></p>
+            <p class="small">Version <?= build_badge($d['build'] ?? null, $latest, (int) $a['id']) ?></p>
+            <p class="small muted">Last notification: <?= !empty($d['last_notification']) ? h($d['last_notification']['title']) . ' · ' . ago($d['last_notification']['sent_at']) : 'none yet' ?><?= empty($d['push_configured']) ? ' · <span class="badge warn">push not set up</span>' : '' ?></p>
           <?php else: ?>
             <p class="flash err small">Can't reach it: <?= h($s['error']) ?></p>
           <?php endif; ?>
@@ -504,15 +509,15 @@ switch ($p) {
             <div><dt>Banner slides</dt><dd><?= (int) ($c['banner_slides'] ?? 0) ?></dd></div>
             <div><dt>Banner views</dt><dd><?= number_format((int) ($c['banner_views'] ?? 0)) ?></dd></div>
             <div><dt>Banner taps</dt><dd><?= number_format((int) ($c['banner_taps'] ?? 0)) ?></dd></div>
-            <div><dt>Pushes sent</dt><dd><?= (int) ($c['notifications_sent'] ?? 0) ?></dd></div>
+            <div><dt>Notifications sent</dt><dd><?= (int) ($c['notifications_sent'] ?? 0) ?></dd></div>
             <div><dt>Team members</dt><dd><?= (int) ($c['team_members'] ?? 0) ?></dd></div>
           </dl>
-          <p>Last push: <?= !empty($summary['last_notification']) ? h($summary['last_notification']['title']) . ' · ' . ago($summary['last_notification']['sent_at']) . ' · ' . (int) $summary['last_notification']['recipients'] . ' subscribers' : 'none yet' ?></p>
-          <p>Push notifications: <?= !empty($summary['push_configured']) ? '<span class="badge ok">set up</span>' : '<span class="badge warn">not set up</span> add the Gravitec keys on the app\'s /install.php' ?></p>
+          <p>Last notification: <?= !empty($summary['last_notification']) ? h($summary['last_notification']['title']) . ' · ' . ago($summary['last_notification']['sent_at']) . ' · ' . (int) $summary['last_notification']['recipients'] . ' subscribers' : 'none yet' ?></p>
+          <p>Notifications: <?= !empty($summary['push_configured']) ? '<span class="badge ok">set up</span>' : '<span class="badge warn">not set up</span> add the Gravitec keys on the app\'s /install.php' ?></p>
         </section>
         <section class="card">
           <h2>Version</h2>
-          <p>Running <?= build_badge($b, $latest) ?><?= $b ? ' · ' . h($b['message'] ?? '') . ' · built ' . ago($b['built_at'] ?? null) : '' ?></p>
+          <p>Running <?= build_badge($b, $latest, (int) $app['id']) ?><?= $b ? ' · ' . h($b['message'] ?? '') . ' · built ' . ago($b['built_at'] ?? null) : '' ?></p>
           <div class="row">
             <a class="btn" href="index.php?p=updates&only=<?= (int) $app['id'] ?>">Update or roll back…</a>
             <form method="post" action="index.php?p=app_migrate" class="inline"><?= csrf_field() ?><input type="hidden" name="id" value="<?= (int) $app['id'] ?>"><button class="btn">Apply database updates</button></form>
@@ -635,7 +640,7 @@ switch ($p) {
           <?php endforeach; ?>
           </tbody>
         </table>
-        <div class="row"><button class="primary" id="run-update" type="button">Update selected apps</button><span class="muted small" id="update-note"></span></div>
+        <div class="row"><button class="primary" id="run-update" type="button"<?= $only && !empty($_GET['go']) ? ' data-autostart="1"' : '' ?>>Update selected apps</button><span class="muted small" id="update-note"></span></div>
       </section>
     <?php elseif (!$gerr): ?>
       <section class="card empty"><p>No releases yet. The first one appears after the next change is pushed to GitHub.</p></section>
@@ -650,9 +655,9 @@ switch ($p) {
     $draft = $_SESSION['push_draft'] ?? null;
     $results = $_SESSION['push_results'] ?? null;
     unset($_SESSION['push_draft'], $_SESSION['push_results']);
-    page_start('Push', 'push');
+    page_start('Notifications', 'push');
     ?>
-    <h1>Send a push notification</h1>
+    <h1>Send a notification</h1>
     <?php if ($results): ?>
       <section class="card">
         <h2>Results</h2>
