@@ -1,6 +1,6 @@
 {
-  "sha": "90458e7f7aa6d55a5b1457eb1f64c5ebd32cab9a",
-  "short": "90458e7",
-  "message": "HQ: import the old Setup Manager (chambers, checklists, release history) (#19)",
-  "built_at": "2026-11-20T20:01:59Z"
+  "sha": "8dd6feaf4fb0bcc483bfd666af98d14093ad688c",
+  "short": "8dd6fea",
+  "message": "HQ: remove the one-time Setup Manager importer (data already imported) (#20)",
+  "built_at": "2026-11-20T20:06:00Z"
 }
