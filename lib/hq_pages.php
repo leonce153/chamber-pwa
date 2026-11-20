@@ -443,10 +443,10 @@ function hq_screen(string $p, array $user): void {
               </div>
               <span class="dot <?= $s['ok'] ? 'up' : 'down' ?>" title="<?= $s['ok'] ? 'Online' : h($s['error']) ?>"></span>
             </header>
-            <p class="small"><?= $s['ok'] ? 'Version ' . build_badge($d['build'] ?? null, $latest) : '<span class="badge err">can\'t reach it</span>' ?></p>
+            <p class="small"><?= $s['ok'] ? 'Version ' . build_badge($d['build'] ?? null, $latest, (int) $a['id']) : '<span class="badge err">can\'t reach it</span>' ?></p>
             <footer>
               <form method="post" action="index.php?p=app_admin" target="_blank" class="inline"><?= csrf_field() ?><input type="hidden" name="id" value="<?= (int) $a['id'] ?>"><button class="btn small">Open admin ↗</button></form>
-              <a class="btn small" href="index.php?p=push&only=<?= (int) $a['id'] ?>">Push</a>
+              <a class="btn small" href="index.php?p=push&only=<?= (int) $a['id'] ?>">Send notification</a>
             </footer>
           </article>
         <?php endforeach; ?>
