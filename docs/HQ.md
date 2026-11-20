@@ -116,6 +116,20 @@ The old Base44 "ChamberLoop Setup Manager" was imported once on Nov 20, 2026: Su
 contact and launch checklist (as tasks), plus its setup record and the core template release history
 as docs in the **Setup Manager** folder. The one-time importer was then removed.
 
+## Announcements (email)
+
+**Announcements** in the menu sends an email to a group of CRM contacts: chamber customers,
+prospect chambers, sponsors, everyone, or the contacts of the chambers you tick.
+
+- Sent from info@chamberloop.com (`mail_from` in config) with PHP `mail()`, one email per person,
+  HTML plus plain text. Up to 250 people per send because Hostinger limits outgoing mail per hour.
+- Write the message in simple Markdown. "Save and preview" shows it; "Send a test to me" sends it
+  only to your own login email.
+- Every email has a personal unsubscribe link (`unsubscribe.php`, signed with the config secret) and a
+  `List-Unsubscribe` header. Clicking Unsubscribe marks the contact **do not email**, and HQ never
+  sends announcements to those contacts.
+- Each send is kept in the history, and each person gets an "Announcement sent" note on their contact.
+
 ## Ask HQ
 
 Settings → Ask HQ: paste an OpenAI API key (stored encrypted) and pick a model (default
@@ -129,6 +143,5 @@ New tables (created by Settings → *Apply dashboard database updates*): `chambe
 
 ## Coming next
 
-Email
-announcements from info@chamberloop.com; two-step sign-in; Stripe billing (test mode first); AI
+Two-step sign-in; Stripe billing (test mode first); AI
 cost per chamber from the OpenAI admin key; reports.

@@ -18,6 +18,15 @@
     });
   });
 
+  // Announcements: confirm before the real send
+  document.querySelectorAll('button[data-confirm-send]').forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      var f = b.form, pick = f.querySelector('input[name="audience"]:checked');
+      var label = pick ? pick.parentNode.textContent.replace(/\s+/g, ' ').trim() : 'the chosen group';
+      if (!window.confirm('Send this announcement now to: ' + label + '?\nThis cannot be undone.')) e.preventDefault();
+    });
+  });
+
   // Select that submits its form
   document.querySelectorAll('select.autosubmit').forEach(function (s) {
     s.addEventListener('change', function () { s.form.submit(); });
