@@ -1011,7 +1011,7 @@ function chamber_detail(array $c): void {
               <div><dt><?= h($l) ?></dt><dd><?= number_format((int) $v) ?></dd></div>
             <?php endforeach; ?>
           </dl>
-          <p class="small muted">Checked <?= ago($c['snapshot_at']) ?><?= !empty($s['version']) ? ' · template version ' . h($s['version']) : '' ?></p>
+          <p class="small muted">Checked <?= ago($c['snapshot_at']) ?><?= !empty($s['version']) ? ' · connector ' . h($s['version']) : '' ?></p>
         <?php endif; ?>
       </section>
       <?php timeline(['chamber_id' => (int) $c['id'], 'org_id' => $c['org_id'] ? (int) $c['org_id'] : null], "index.php?p=chamber&id={$c['id']}", 'chamber_id = ?', [(int) $c['id']]); ?>
