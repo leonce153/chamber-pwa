@@ -40,7 +40,7 @@ const HQ_ORG_KINDS = ['prospect' => 'Prospect chamber', 'chamber' => 'Chamber (c
 
 const HQ_ACTIVITY_KINDS = ['note' => 'Note', 'call' => 'Call', 'email' => 'Email', 'meeting' => 'Meeting', 'demo' => 'Demo', 'system' => 'System'];
 
-const HQ_DOC_FOLDERS = ['General', 'New chamber setup', 'Base44', 'Cloudflare', 'Inbound email', 'Amazon SES', 'Hostinger and PWAs', 'Stripe', 'OpenAI', 'Troubleshooting'];
+const HQ_DOC_FOLDERS = ['General', 'New chamber setup', 'Base44', 'Cloudflare', 'Inbound email', 'Amazon SES', 'Hostinger and PWAs', 'Stripe', 'OpenAI', 'Troubleshooting', 'Setup Manager'];
 
 /** Hours between automatic connector checks (Leon, Nov 20: every 4 hours, plus refresh on demand). */
 const HQ_REFRESH_HOURS = 4;
