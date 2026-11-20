@@ -156,6 +156,7 @@ $user = require_login();
 if ($post) check_csrf();
 
 // HQ screens (chambers, CRM, docs, Ask HQ) live in lib/hq_pages.php; it exits when it handles $p.
+ensure_schema();
 require __DIR__ . '/lib/hq.php';
 require __DIR__ . '/lib/hq_pages.php';
 
