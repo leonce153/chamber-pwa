@@ -1,6 +1,6 @@
 {
-  "sha": "8dd6feaf4fb0bcc483bfd666af98d14093ad688c",
-  "short": "8dd6fea",
-  "message": "HQ: remove the one-time Setup Manager importer (data already imported) (#20)",
-  "built_at": "2026-11-20T20:06:00Z"
+  "sha": "43f5ec7197203f0b838dbf0b7808ba1f9067b3f8",
+  "short": "43f5ec7",
+  "message": "HQ: email announcements to CRM contacts, with unsubscribe links (#21)",
+  "built_at": "2026-11-20T20:14:14Z"
 }
