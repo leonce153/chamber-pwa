@@ -1,6 +1,6 @@
 {
-  "sha": "b95838ba55ba6a1f24ab7ff9461b6bc0cc0ca38b",
-  "short": "b95838b",
-  "message": "Dashboard: add \"Forgot your password?\" with an emailed reset link (#12)",
-  "built_at": "2026-11-20T16:54:42Z"
+  "sha": "061cfb68ba27b127987d1953aa6da3f7fabb19bc",
+  "short": "061cfb6",
+  "message": "Add Chamber Loop HQ (phase 1) to the dashboard (#11)",
+  "built_at": "2026-11-20T16:55:30Z"
 }
