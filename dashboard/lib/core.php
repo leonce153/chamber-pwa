@@ -340,3 +340,5 @@ function http(string $method, string $url, array $headers = [], ?string $body = 
   if ($out === false) return [0, $err ?: 'Could not connect'];
   return [$status, (string) $out];
 }
+
+require_once __DIR__ . '/mailer.php';
