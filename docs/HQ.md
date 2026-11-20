@@ -31,6 +31,11 @@ status. It is read-only and checks a shared secret.
 - **Request:** `POST <function URL>`, header `X-HQ-Key: <secret>`, body `{"action":"snapshot"}`
 - **Secret:** a random string saved as the app secret `HQ_CONNECTOR_KEY` and pasted into the chamber
   card in HQ (stored encrypted). Use a different one for each chamber.
+- **New chambers:** the ChamberLoop Core Template already has `hqConnector` (v3), so a new chamber
+  app made from it has the function too. To connect a new chamber: set the app secret
+  `HQ_CONNECTOR_KEY` (for example `openssl rand -hex 24`), then in HQ add the chamber with
+  `https://<app>.base44.app/functions/hqConnector` and the same key. Until the secret is set,
+  every call is refused.
 - **Answer:**
 
 ```json
@@ -96,6 +101,14 @@ Content-Type: application/json
 - HQ finds or creates the organization and contact (matched by name and email), opens a lead in
   **New** with "Reply to the new lead" due tomorrow, and logs the details as a note.
 - Answers `201 {"ok":true,"deal_id":12}`; `401` wrong key; `422` no name, email or organization.
+- Each new lead from the inbox also emails a short note (with Reply-To set to the lead) to info@chamberloop.com, or to the `lead_notify_email` setting if set.
+- `member_count` can be a number or text such as "100–249" or "1,000 or more"; HQ keeps the first number.
+
+**chamberloop.com is connected.** The marketing site (Base44 app "Chamber Loop") has a backend function
+`forwardLeadToHQ` and two workflows, "Send Demo Request to HQ" and "Send Contact Message to HQ", that
+run when a DemoRequest or ContactInquiry is created. The function reads the stored record, posts it here
+with the `HQ_LEAD_KEY` secret (set in that app's secrets), and stamps `hq_forwarded_at` so each one is
+sent once. If you make a new lead key in HQ, update `HQ_LEAD_KEY` there too.
 
 ## Ask HQ
 
@@ -110,6 +123,6 @@ New tables (created by Settings → *Apply dashboard database updates*): `chambe
 
 ## Coming next
 
-Connector function in the Base44 core template; import from the Setup Manager; email
+Import from the Setup Manager; email
 announcements from info@chamberloop.com; two-step sign-in; Stripe billing (test mode first); AI
 cost per chamber from the OpenAI admin key; reports.
