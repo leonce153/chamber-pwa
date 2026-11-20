@@ -43,6 +43,7 @@ if (!empty($in['website_url'])) lead_out(200, ['ok' => true]);
 
 try {
   $id = create_lead($in, 'webhook');
+  notify_new_lead($id, $in);
   lead_out(201, ['ok' => true, 'deal_id' => $id]);
 } catch (InvalidArgumentException $e) {
   lead_out(422, ['ok' => false, 'error' => $e->getMessage()]);
