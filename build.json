@@ -1,6 +1,6 @@
 {
-  "sha": "a22ec21f7eb28a01f0a5da684a54c197533c1b36",
-  "short": "a22ec21",
-  "message": "HQ leads: email on new leads, read member ranges (#18)",
-  "built_at": "2026-11-20T20:00:50Z"
+  "sha": "90458e7f7aa6d55a5b1457eb1f64c5ebd32cab9a",
+  "short": "90458e7",
+  "message": "HQ: import the old Setup Manager (chambers, checklists, release history) (#19)",
+  "built_at": "2026-11-20T20:01:59Z"
 }
