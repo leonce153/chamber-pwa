@@ -8,10 +8,10 @@ under **PWAs** in the top menu:
 
 - **Apps**: each app's status, version, banner views/taps, pushes sent and last push.
 - **Open admin**: signs you straight into an app's `/admin` with a one-time link (good for 3 minutes).
-- **Push**: send one notification to one app, several, or all of them.
+- **Notifications**: send one notification to one app, several, or all of them.
 - **Template**: copy the template app's Home screen, a single Home section, or its tabs to one app or
   all apps. The app's current version is backed up first; restore it from that app's page.
-- **Updates**: move one app, or all of them, to a release (or back to an older one). The app pulls it
+- **Updates**: click **Update available · update now** on an app card to move it to the newest release (you confirm first), or move one app, or all of them, to a release (or back to an older one). The app pulls it
   from GitHub, then its database updates run.
 - **Activity**: everything the dashboard did, and what failed.
 

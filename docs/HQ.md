@@ -10,7 +10,7 @@ Hostinger with no Base44 credits. It replaces the Base44 "ChamberLoop Setup Mana
 | --- | --- |
 | **Home** | Today: tasks and follow-ups due, new leads, chambers that need attention, monthly revenue. Chamber cards on top, PWA cards below. |
 | **Chambers** | One card per chamber on the platform: status (onboarding, live, grace, paused), plan and price, sponsor, member count, links to the site, admin and Base44 editor, and live numbers from its HQ connector. |
-| **PWAs** | The original dashboard: Apps, Updates, Push, Template (see DASHBOARD.md). |
+| **PWAs** | The original dashboard: Apps, Updates, Notifications, Template (see DASHBOARD.md). |
 | **Leads** | Two pipelines, **Chambers** and **Sponsors**, as a board or a list. Each lead has a next step and due date, notes and history, and can become a chamber card when won. |
 | **Contacts** | People and organizations (chambers, sponsors, partners, vendors). |
 | **Tasks** | Your to-do list, linked to a lead, contact, organization or chamber. |
