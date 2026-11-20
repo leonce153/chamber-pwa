@@ -10,6 +10,7 @@ declare(strict_types=1);
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 require __DIR__ . '/lib/core.php';
 require __DIR__ . '/lib/hq.php';
+ensure_schema();
 
 $force = in_array('--all', $argv ?? [], true);
 $cutoff = gmdate('Y-m-d H:i:s', time() - (HQ_REFRESH_HOURS * 3600 - 10 * 60));
