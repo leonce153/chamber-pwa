@@ -357,7 +357,8 @@ function create_lead(array $in, string $defaultSource = 'website'): int {
   $pipeline = ($in['pipeline'] ?? '') === 'sponsor' ? 'sponsor' : 'chamber';
   $orgId = $orgName !== '' ? org_find_or_create($orgName, $pipeline === 'sponsor' ? 'sponsor' : 'prospect', [
     'town' => isset($in['town']) ? mb_substr((string) $in['town'], 0, 120) : null,
-    'member_count' => isset($in['member_count']) && is_numeric(preg_replace('/\D/', '', (string) $in['member_count'])) ? (int) preg_replace('/\D/', '', (string) $in['member_count']) : null,
+    // "120", "1,000 or more", "100–249" (a range keeps its low end)
+    'member_count' => isset($in['member_count']) && preg_match('/\d[\d,]*/', (string) $in['member_count'], $mc) ? (int) str_replace(',', '', $mc[0]) : null,
   ]) : null;
   $contactId = $name !== '' || $email !== '' ? contact_find_or_create($orgId, $name !== '' ? $name : $email, $email ?: null, isset($in['phone']) ? mb_substr((string) $in['phone'], 0, 60) : null, isset($in['role']) ? mb_substr((string) $in['role'], 0, 120) : null) : null;
   $source = mb_substr(trim((string) ($in['source'] ?? $defaultSource)) ?: $defaultSource, 0, 60);

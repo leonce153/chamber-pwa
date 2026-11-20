@@ -96,6 +96,13 @@ Content-Type: application/json
 - HQ finds or creates the organization and contact (matched by name and email), opens a lead in
   **New** with "Reply to the new lead" due tomorrow, and logs the details as a note.
 - Answers `201 {"ok":true,"deal_id":12}`; `401` wrong key; `422` no name, email or organization.
+- `member_count` can be a number or text such as "100–249" or "1,000 or more"; HQ keeps the first number.
+
+**chamberloop.com is connected.** The marketing site (Base44 app "Chamber Loop") has a backend function
+`forwardLeadToHQ` and two workflows, "Send Demo Request to HQ" and "Send Contact Message to HQ", that
+run when a DemoRequest or ContactInquiry is created. The function reads the stored record, posts it here
+with the `HQ_LEAD_KEY` secret (set in that app's secrets), and stamps `hq_forwarded_at` so each one is
+sent once. If you make a new lead key in HQ, update `HQ_LEAD_KEY` there too.
 
 ## Ask HQ
 
