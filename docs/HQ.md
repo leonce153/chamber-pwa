@@ -31,6 +31,11 @@ status. It is read-only and checks a shared secret.
 - **Request:** `POST <function URL>`, header `X-HQ-Key: <secret>`, body `{"action":"snapshot"}`
 - **Secret:** a random string saved as the app secret `HQ_CONNECTOR_KEY` and pasted into the chamber
   card in HQ (stored encrypted). Use a different one for each chamber.
+- **New chambers:** the ChamberLoop Core Template already has `hqConnector` (v3), so a new chamber
+  app made from it has the function too. To connect a new chamber: set the app secret
+  `HQ_CONNECTOR_KEY` (for example `openssl rand -hex 24`), then in HQ add the chamber with
+  `https://<app>.base44.app/functions/hqConnector` and the same key. Until the secret is set,
+  every call is refused.
 - **Answer:**
 
 ```json
@@ -118,6 +123,6 @@ New tables (created by Settings → *Apply dashboard database updates*): `chambe
 
 ## Coming next
 
-Connector function in the Base44 core template; import from the Setup Manager; email
+Import from the Setup Manager; email
 announcements from info@chamberloop.com; two-step sign-in; Stripe billing (test mode first); AI
 cost per chamber from the OpenAI admin key; reports.
