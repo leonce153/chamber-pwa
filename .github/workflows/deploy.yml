@@ -114,10 +114,17 @@ jobs:
         run: |
           if [ -z "$HOOK" ]; then echo "DASHBOARD_DEPLOY_HOOK is not set; deploy from hPanel."; exit 0; fi
           sleep 5
+          # Send the same kind of request GitHub's own webhook sends, since that is what Hostinger expects.
+          sha=$(git ls-remote origin refs/heads/dashboard-site | cut -f1)
+          body=$(printf '{"ref":"refs/heads/dashboard-site","after":"%s","repository":{"full_name":"%s"}}' "$sha" "$GITHUB_REPOSITORY")
+          seen=""
           for i in 1 2 3; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$HOOK" || true)
+            code=$(curl -s -o /tmp/hook.out -w '%{http_code}' -X POST "$HOOK" \
+              -H 'Content-Type: application/json' -H 'X-GitHub-Event: push' \
+              -H 'User-Agent: GitHub-Hookshot/chamber-pwa' --data "$body" || true)
             echo "Hostinger answered $code"
-            case "$code" in 2*) exit 0;; esac
+            case "$code" in 2*) echo "::notice::Hostinger accepted the deploy request ($code)."; exit 0;; esac
+            seen="$seen $code $(head -c 120 /tmp/hook.out | tr -d '\r\n')"
             sleep 20
           done
-          echo "::warning::Hostinger did not accept the deploy request; deploy from hPanel."
+          echo "::warning::Hostinger did not accept the deploy request (answers:$seen); deploy from hPanel."
