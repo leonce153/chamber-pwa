@@ -1,6 +1,6 @@
 {
-  "sha": "cdba21d1e57261fcbd717c832dfa2235ec6b9311",
-  "short": "cdba21d",
-  "message": "Dashboard: create new tables automatically after an update (#13)",
-  "built_at": "2026-11-20T17:04:42Z"
+  "sha": "f86fbc48f579596f92ae5adee56ce7e71fe90a2a",
+  "short": "f86fbc4",
+  "message": "Dashboard: one-click \"update now\" on app cards; rename Push to Notifications (#14)",
+  "built_at": "2026-11-20T18:19:01Z"
 }
