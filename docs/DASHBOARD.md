@@ -74,5 +74,7 @@ The dashboard code deploys itself: every push to `main` republishes `dashboard/`
 `dashboard-site` branch. Its own database tables are created by `setup.php`; Settings →
 *Apply dashboard database updates* adds new ones after a dashboard change.
 
-Forgot the dashboard password? Delete the row in its `users` table (hPanel → phpMyAdmin) and open
-`/setup.php` again.
+Forgot the dashboard password? Click **Forgot your password?** on the sign-in page. A link good for
+30 minutes is emailed (PHP `mail()`, from `info@chamberloop.com`; set `mail_from` in
+`data/config.php` to change it). If the email never arrives, delete the row in the `users` table
+(hPanel → phpMyAdmin) and open `/setup.php` again to make a new login.
