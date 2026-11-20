@@ -56,6 +56,10 @@ if ($p === 'login') {
 $user = require_login();
 if ($post) check_csrf();
 
+// HQ screens (chambers, CRM, docs, Ask HQ) live in lib/hq_pages.php; it exits when it handles $p.
+require __DIR__ . '/lib/hq.php';
+require __DIR__ . '/lib/hq_pages.php';
+
 if ($p === 'logout' && $post) {
   $_SESSION = [];
   session_destroy();
@@ -77,7 +81,7 @@ function app_or_404(): array {
   $a = find_app((int) ($_GET['id'] ?? $_POST['id'] ?? 0));
   if (!$a) {
     flash('That app was not found.', 'err');
-    redirect('index.php');
+    redirect('index.php?p=pwas');
   }
   return $a;
 }
@@ -153,7 +157,7 @@ if ($post) {
       db()->prepare('DELETE FROM backups WHERE app_id = ?')->execute([$app['id']]);
       log_activity(null, 'Removed app from dashboard', $app['name'] . ' (' . $app['url'] . ')');
       flash($app['name'] . ' was removed from the dashboard. The app itself was not changed.');
-      redirect('index.php');
+      redirect('index.php?p=pwas');
     }
     case 'app_admin': {
       $app = app_or_404();
@@ -302,14 +306,14 @@ if ($post) {
 
 switch ($p) {
 
-  case 'home': {
+  case 'pwas': {
     $apps = all_apps();
     $sum = fetch_summaries($apps);
     $latest = latest_release_safe();
-    page_start('Apps', 'home');
+    page_start('PWAs', 'pwas');
     ?>
     <div class="head">
-      <h1>Your chamber apps</h1>
+      <h1>Chamber PWAs</h1>
       <a class="btn primary" href="index.php?p=app_new">Add an app</a>
     </div>
     <?php if (!$apps): ?>
@@ -376,7 +380,7 @@ switch ($p) {
       }
     }
     $latest = latest_release_safe();
-    page_start($app ? $app['name'] : 'Add an app', 'home');
+    page_start($app ? $app['name'] : 'Add an app', 'pwas');
     if ($app): ?>
       <div class="head">
         <div>
@@ -693,6 +697,7 @@ switch ($p) {
         <button class="primary">Save</button>
       </form>
     </section>
+    <?php hq_settings_cards(); ?>
     <section class="card">
       <h2>Your password</h2>
       <p class="muted">Signed in as <?= h($user['email']) ?>.</p>
@@ -716,6 +721,6 @@ switch ($p) {
   default:
     http_response_code(404);
     page_start('Not found');
-    echo '<h1>Not found</h1><p><a href="index.php">Back to your apps</a></p>';
+    echo '<h1>Not found</h1><p><a href="index.php">Back to Home</a></p>';
     page_end();
 }

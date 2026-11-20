@@ -1,7 +1,10 @@
-# Master dashboard
+# Master dashboard (Chamber Loop HQ)
 
 `dashboard/` is a small PHP site (live at **https://dashboard.chamberloop.com**) that manages every
-chamber app from one login:
+chamber app from one login. Since version 1.1 it is **Chamber Loop HQ**: it also tracks every chamber
+on the Base44 platform, works as the CRM (leads, contacts, organizations, tasks), and holds the docs
+library with Ask HQ. Those parts are described in [HQ.md](HQ.md). The PWA screens below now live
+under **PWAs** in the top menu:
 
 - **Apps**: each app's status, version, banner views/taps, pushes sent and last push.
 - **Open admin**: signs you straight into an app's `/admin` with a one-time link (good for 3 minutes).
@@ -68,7 +71,9 @@ start at zero. App settings (name, colors, logo, push keys) are never copied.
 2. `data/config.php` on the server holds the database login (written by `setup.php` or placed there).
 3. Open `https://dashboard.chamberloop.com/setup.php` and create your login.
 4. Settings → paste a fine-grained GitHub token (only `chamber-pwa`, *Contents: Read and write*).
-5. Apps → Add an app for each chamber.
+5. PWAs → Add an app for each chamber.
+6. Settings → Ask HQ: paste an OpenAI key. Then set the 4-hour cron job shown in Settings
+   (see [HQ.md](HQ.md)).
 
 The dashboard code deploys itself: every push to `main` republishes `dashboard/` to the
 `dashboard-site` branch. Its own database tables are created by `setup.php`; Settings →
