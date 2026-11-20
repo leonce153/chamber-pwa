@@ -96,6 +96,7 @@ Content-Type: application/json
 - HQ finds or creates the organization and contact (matched by name and email), opens a lead in
   **New** with "Reply to the new lead" due tomorrow, and logs the details as a note.
 - Answers `201 {"ok":true,"deal_id":12}`; `401` wrong key; `422` no name, email or organization.
+- Each new lead from the inbox also emails a short note (with Reply-To set to the lead) to info@chamberloop.com, or to the `lead_notify_email` setting if set.
 - `member_count` can be a number or text such as "100–249" or "1,000 or more"; HQ keeps the first number.
 
 **chamberloop.com is connected.** The marketing site (Base44 app "Chamber Loop") has a backend function

@@ -347,6 +347,42 @@ function lead_hook_secret(): string {
 }
 
 /** Create org + contact + deal + note from a lead (website demo request, contact form, NotiQ…). */
+/**
+ * Email a short note about a new lead that came in from outside (website forms, webhooks).
+ * Goes to the "lead_notify_email" setting, or info@chamberloop.com. Never throws.
+ */
+function notify_new_lead(int $dealId, array $in): void {
+  try {
+    $to = trim((string) (setting('lead_notify_email') ?: 'info@chamberloop.com'));
+    if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) return;
+    $from = (string) cfg('mail_from', 'info@chamberloop.com');
+    $clean = fn($v) => trim(preg_replace('/[\r\n]+/', ' ', is_array($v) ? implode(', ', array_map('strval', $v)) : (string) $v));
+    $who = $clean($in['organization'] ?? '') ?: ($clean($in['name'] ?? '') ?: $clean($in['email'] ?? 'someone'));
+    $source = $clean($in['source'] ?? 'webhook') ?: 'webhook';
+    $lines = [];
+    foreach (['name' => 'Name', 'email' => 'Email', 'phone' => 'Phone', 'organization' => 'Organization', 'role' => 'Role',
+              'member_count' => 'Members', 'interests' => 'Interested in', 'topic' => 'Topic'] as $k => $label) {
+      $v = $clean($in[$k] ?? '');
+      if ($v !== '') $lines[] = "$label: " . mb_substr($v, 0, 300);
+    }
+    foreach (['notes' => 'Notes', 'message' => 'Message'] as $k => $label) {
+      $v = trim((string) ($in[$k] ?? ''));
+      if ($v !== '') $lines[] = "\n$label:\n" . mb_substr($v, 0, 4000);
+    }
+    $link = rtrim((string) cfg('base_url', 'https://dashboard.chamberloop.com'), '/') . "/index.php?p=lead&id=$dealId";
+    $subject = mb_substr("New lead: $who ($source)", 0, 150);
+    $body = "A new lead just arrived in Chamber Loop HQ.\n\n" . implode("\n", $lines) . "\n\nOpen it in HQ:\n$link\n";
+    $email = $clean($in['email'] ?? '');
+    $headers = "From: Chamber Loop HQ <$from>\r\nContent-Type: text/plain; charset=UTF-8"
+      . ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) ? "\r\nReply-To: $email" : '');
+    if (!@mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $body, $headers, '-f' . $from)) {
+      error_log("New lead email for deal $dealId could not be sent");
+    }
+  } catch (Throwable $e) {
+    error_log('notify_new_lead: ' . $e->getMessage());
+  }
+}
+
 function create_lead(array $in, string $defaultSource = 'website'): int {
   $orgName = trim((string) ($in['organization'] ?? $in['org'] ?? $in['company'] ?? ''));
   $name = trim((string) ($in['name'] ?? ''));
