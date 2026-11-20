@@ -47,6 +47,105 @@ if ($p === 'login') {
       <label>Password <input name="password" type="password" required autocomplete="current-password"></label>
       <button class="primary">Sign in</button>
     </form>
+    <p class="small"><a href="index.php?p=forgot">Forgot your password?</a></p>
+  </section>
+  <?php
+  page_end();
+  exit;
+}
+
+// ---------------- forgot / reset password ----------------
+// The reset token lives in the settings table (pwreset_<user id>), so this works before any
+// dashboard database update has been applied.
+
+if ($p === 'forgot') {
+  if (current_user()) redirect('index.php');
+  $sent = false; $err = null;
+  if ($post) {
+    check_csrf();
+    if (too_many_attempts()) {
+      $err = 'Too many tries. Wait 15 minutes and try again.';
+    } else {
+      record_attempt();
+      $st = db()->prepare('SELECT id, email FROM users WHERE email = ?');
+      $st->execute([strtolower(trim((string) ($_POST['email'] ?? '')))]);
+      if ($u = $st->fetch()) {
+        $token = bin2hex(random_bytes(32));
+        set_setting('pwreset_' . (int) $u['id'], json_encode(['h' => hash('sha256', $token), 'exp' => time() + 1800]));
+        $link = rtrim((string) cfg('base_url', 'https://dashboard.chamberloop.com'), '/') . '/index.php?p=reset&u=' . (int) $u['id'] . '&t=' . $token;
+        $from = (string) cfg('mail_from', 'info@chamberloop.com');
+        $ok = @mail(
+          $u['email'],
+          'Reset your Chamber Loop HQ password',
+          "Someone asked to reset the password for Chamber Loop HQ (dashboard.chamberloop.com).\n\n"
+          . "To choose a new password, open this link within 30 minutes:\n$link\n\n"
+          . "If this wasn't you, ignore this email. Your password stays the same.\n",
+          "From: Chamber Loop HQ <$from>\r\nContent-Type: text/plain; charset=UTF-8",
+          '-f' . $from
+        );
+        if (!$ok) error_log('Password reset email could not be sent to user ' . (int) $u['id']);
+      }
+      $sent = true; // same answer either way, so the form doesn't reveal which emails have a login
+    }
+  }
+  page_start('Forgot password');
+  ?>
+  <section class="card narrow">
+    <h1>Forgot your password?</h1>
+    <?php if ($err): ?><div class="flash err"><?= h($err) ?></div><?php endif; ?>
+    <?php if ($sent): ?>
+      <div class="flash">If that email has a login here, a reset link is on its way. It works for 30 minutes. Check spam too.</div>
+      <p class="small"><a href="index.php?p=login">Back to sign in</a></p>
+    <?php else: ?>
+      <p class="muted">Enter the email you sign in with and we'll send you a link to choose a new password.</p>
+      <form method="post" class="stack">
+        <?= csrf_field() ?>
+        <label>Email <input name="email" type="email" required autocomplete="username"></label>
+        <button class="primary">Send reset link</button>
+      </form>
+      <p class="small"><a href="index.php?p=login">Back to sign in</a></p>
+    <?php endif; ?>
+  </section>
+  <?php
+  page_end();
+  exit;
+}
+
+if ($p === 'reset') {
+  $uid = (int) ($_GET['u'] ?? 0);
+  $token = (string) ($_GET['t'] ?? '');
+  $rec = $uid ? json_decode((string) setting('pwreset_' . $uid), true) : null;
+  $valid = is_array($rec) && ($rec['exp'] ?? 0) > time() && $token !== '' && hash_equals((string) ($rec['h'] ?? ''), hash('sha256', $token));
+  $err = null;
+  if ($valid && $post) {
+    check_csrf();
+    $pw = (string) ($_POST['new'] ?? '');
+    if (mb_strlen($pw) < 10) $err = 'Use at least 10 characters.';
+    elseif ($pw !== (string) ($_POST['new2'] ?? '')) $err = 'The two passwords do not match.';
+    else {
+      db()->prepare('UPDATE users SET password_hash = ? WHERE id = ?')->execute([password_hash($pw, PASSWORD_DEFAULT), $uid]);
+      set_setting('pwreset_' . $uid, null);
+      db()->prepare('DELETE FROM login_attempts WHERE ip = ?')->execute([client_ip()]);
+      flash('Password changed. Sign in with your new password.');
+      redirect('index.php?p=login');
+    }
+  }
+  page_start('Choose a new password');
+  ?>
+  <section class="card narrow">
+    <h1>Choose a new password</h1>
+    <?php if (!$valid): ?>
+      <div class="flash err">This reset link has expired or was already used.</div>
+      <p class="small"><a href="index.php?p=forgot">Send a new link</a></p>
+    <?php else: ?>
+      <?php if ($err): ?><div class="flash err"><?= h($err) ?></div><?php endif; ?>
+      <form method="post" class="stack">
+        <?= csrf_field() ?>
+        <label>New password <input name="new" type="password" required minlength="10" autocomplete="new-password"></label>
+        <label>New password again <input name="new2" type="password" required minlength="10" autocomplete="new-password"></label>
+        <button class="primary">Save new password</button>
+      </form>
+    <?php endif; ?>
   </section>
   <?php
   page_end();
