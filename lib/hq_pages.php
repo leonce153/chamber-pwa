@@ -12,9 +12,9 @@ declare(strict_types=1);
 
 const HQ_ACTIONS = ['chamber_save', 'chamber_refresh', 'chamber_delete', 'org_save', 'org_delete', 'contact_save', 'contact_delete',
   'lead_quick', 'lead_save', 'lead_stage', 'lead_delete', 'lead_to_chamber', 'note_add', 'task_save', 'task_done', 'task_delete',
-  'doc_save', 'doc_delete', 'ask', 'ask_save_doc', 'hq_settings'];
+  'doc_save', 'doc_delete', 'ask', 'ask_save_doc', 'hq_settings', 'announce_post'];
 const HQ_SCREENS = ['home', 'chambers', 'chamber', 'chamber_new', 'leads', 'lead', 'contacts', 'contact', 'orgs', 'org',
-  'tasks', 'docs', 'doc', 'doc_edit', 'ask'];
+  'tasks', 'docs', 'doc', 'doc_edit', 'ask', 'announce', 'announcement'];
 
 if ($post && in_array($p, HQ_ACTIONS, true)) {
   hq_action($p, $user);
@@ -347,6 +347,68 @@ function hq_action(string $p, array $user): void {
     }
 
     // ---------- settings ----------
+    case 'announce_post': {
+      require_once __DIR__ . '/announce.php';
+      $draft = [
+        'subject' => trim(mb_substr(preg_replace('/[\r\n]+/', ' ', (string) ($_POST['subject'] ?? '')), 0, 190)),
+        'body' => trim((string) ($_POST['body'] ?? '')),
+        'audience' => isset(ANN_AUDIENCES[$_POST['audience'] ?? '']) ? (string) $_POST['audience'] : 'chambers',
+        'chambers' => array_values(array_filter(array_map('intval', (array) ($_POST['chambers'] ?? [])))),
+      ];
+      set_setting('announce_draft', json_encode($draft));
+      $do = (string) ($_POST['do'] ?? 'save');
+      if ($do === 'clear') {
+        set_setting('announce_draft', null);
+        redirect('index.php?p=announce');
+      }
+      if ($draft['subject'] === '' || $draft['body'] === '') {
+        flash('Add a subject and a message first.', 'err');
+        redirect('index.php?p=announce');
+      }
+      if ($do === 'test') {
+        $ok = ann_send_one($user['email'], '[Test] ' . $draft['subject'], $draft['body'], null);
+        flash($ok ? "Test sent to {$user['email']}. Check your inbox (and spam)." : 'The test could not be sent. The server refused the email.', $ok ? 'ok' : 'err');
+        redirect('index.php?p=announce');
+      }
+      if ($do === 'send') {
+        $list = ann_recipients($draft['audience'], $draft['chambers']);
+        if (!$list) {
+          flash('Nobody to send to. Contacts need an email and must not be marked "do not email".', 'err');
+          redirect('index.php?p=announce');
+        }
+        if (count($list) > ANN_MAX) {
+          flash('That is ' . count($list) . ' people, more than the ' . ANN_MAX . ' HQ sends at once. Pick a smaller group.', 'err');
+          redirect('index.php?p=announce');
+        }
+        @set_time_limit(600);
+        $label = ANN_AUDIENCES[$draft['audience']];
+        if ($draft['audience'] === 'pick' && $draft['chambers']) {
+          $names = rows('SELECT name FROM chambers WHERE id IN (' . implode(',', $draft['chambers']) . ') ORDER BY name');
+          $label = implode(', ', array_column($names, 'name'));
+        }
+        db()->prepare('INSERT INTO announcements (subject, body, audience, audience_label, recipients, who, sent_at) VALUES (?,?,?,?,?,?,?)')
+          ->execute([$draft['subject'], $draft['body'], $draft['audience'], mb_substr($label, 0, 255), count($list), $user['email'], now()]);
+        $annId = (int) db()->lastInsertId();
+        $sent = 0; $failed = 0;
+        foreach ($list as $r) {
+          if (ann_send_one((string) $r['email'], $draft['subject'], $draft['body'], (int) $r['id'])) {
+            $sent++;
+            add_activity(['contact_id' => (int) $r['id'], 'org_id' => $r['org_id'] ? (int) $r['org_id'] : null], 'email', "Announcement sent: {$draft['subject']} (index.php?p=announcement&id=$annId)");
+          } else {
+            $failed++;
+          }
+          if (($sent + $failed) % 20 === 0) usleep(300000);
+        }
+        db()->prepare('UPDATE announcements SET sent = ?, failed = ? WHERE id = ?')->execute([$sent, $failed, $annId]);
+        set_setting('announce_draft', null);
+        log_activity(null, 'Sent announcement', "{$draft['subject']} to $sent ($failed failed)", $failed === 0);
+        flash("Sent to $sent " . ($sent === 1 ? 'person' : 'people') . ($failed ? ", $failed could not be sent" : '') . '.', $failed ? 'err' : 'ok');
+        redirect("index.php?p=announcement&id=$annId");
+      }
+      flash('Draft saved.');
+      redirect('index.php?p=announce');
+    }
+
     case 'hq_settings': {
       $k = trim((string) ($_POST['openai_api_key'] ?? ''));
       if ($k !== '') set_setting('openai_api_key', seal($k));
@@ -816,6 +878,85 @@ function hq_screen(string $p, array $user): void {
             </li>
           <?php endforeach; ?>
         </ul>
+      </section>
+      <?php
+      page_end();
+      return;
+    }
+
+    // ---------- announcements ----------
+    case 'announce': {
+      require_once __DIR__ . '/announce.php';
+      $d = json_decode((string) setting('announce_draft'), true) ?: ['subject' => '', 'body' => '', 'audience' => 'chambers', 'chambers' => []];
+      $counts = [];
+      foreach (array_keys(ANN_AUDIENCES) as $a) if ($a !== 'pick') $counts[$a] = count(ann_recipients($a));
+      $picked = $d['audience'] === 'pick' ? count(ann_recipients('pick', $d['chambers'])) : null;
+      $now = $d['audience'] === 'pick' ? $picked : ($counts[$d['audience']] ?? 0);
+      $chambers = rows('SELECT id, name, org_id FROM chambers ORDER BY name');
+      $past = rows('SELECT * FROM announcements ORDER BY sent_at DESC LIMIT 30');
+      page_start('Announcements', 'announce');
+      ?>
+      <div class="head"><h1>Announcements</h1></div>
+      <div class="cols wide-left">
+        <section class="card">
+          <h2>New announcement</h2>
+          <p class="muted small">Sent from info@chamberloop.com, one email per person, each with its own unsubscribe link. Contacts marked "do not email" are skipped.</p>
+          <form method="post" action="index.php?p=announce_post" class="stack">
+            <?= csrf_field() ?>
+            <label>Subject <input name="subject" maxlength="190" value="<?= h($d['subject']) ?>" required></label>
+            <label>Message <textarea name="body" rows="12" required placeholder="Write it like a short letter. **bold**, [link](https://…), - lists and ## headings work."><?= h($d['body']) ?></textarea></label>
+            <fieldset class="stack">
+              <legend>Send to</legend>
+              <?php foreach (ANN_AUDIENCES as $k => $label): ?>
+                <label class="check"><input type="radio" name="audience" value="<?= h($k) ?>"<?= $d['audience'] === $k ? ' checked' : '' ?>> <?= h($label) ?><?php if (isset($counts[$k])): ?> <span class="muted small">(<?= (int) $counts[$k] ?>)</span><?php endif; ?></label>
+              <?php endforeach; ?>
+              <?php if ($chambers): ?>
+                <div class="row" style="padding-left:24px">
+                  <?php foreach ($chambers as $c): ?>
+                    <label class="check small"><input type="checkbox" name="chambers[]" value="<?= (int) $c['id'] ?>"<?= in_array((int) $c['id'], $d['chambers'], true) ? ' checked' : '' ?><?= $c['org_id'] ? '' : ' disabled title="Link this chamber to an organization first"' ?>> <?= h($c['name']) ?></label>
+                  <?php endforeach; ?>
+                </div>
+              <?php endif; ?>
+            </fieldset>
+            <div class="row">
+              <button name="do" value="save">Save and preview</button>
+              <button name="do" value="test">Send a test to me</button>
+              <button name="do" value="send" class="primary" data-confirm-send="1">Send now</button>
+              <button name="do" value="clear" class="link small" formnovalidate>Clear</button>
+            </div>
+            <p class="small muted">With the last saved choice this goes to <strong><?= (int) $now ?></strong> <?= $now === 1 ? 'person' : 'people' ?>. Save first if you changed who it goes to. Up to <?= ANN_MAX ?> at a time.</p>
+          </form>
+        </section>
+        <section class="card">
+          <h2>Preview</h2>
+          <?php if ($d['body'] !== ''): ?>
+            <p><strong><?= h($d['subject']) ?></strong></p>
+            <div class="doc"><?= md($d['body']) ?></div>
+            <p class="small muted">Each email ends with "Chamber Loop · chamberloop.com · Unsubscribe".</p>
+          <?php else: ?><p class="muted">Write a message and click "Save and preview".</p><?php endif; ?>
+          <h2>Sent</h2>
+          <?php if (!$past): ?><p class="muted">Nothing sent yet.</p><?php endif; ?>
+          <ul class="list">
+            <?php foreach ($past as $a): ?>
+              <li><a href="index.php?p=announcement&id=<?= (int) $a['id'] ?>"><?= h($a['subject']) ?></a><span class="muted small"><?= (int) $a['sent'] ?> sent · <?= h(ago($a['sent_at'])) ?></span></li>
+            <?php endforeach; ?>
+          </ul>
+        </section>
+      </div>
+      <?php
+      page_end();
+      return;
+    }
+
+    case 'announcement': {
+      $a = id_or_404('announcements', 'index.php?p=announce');
+      page_start($a['subject'], 'announce');
+      ?>
+      <div class="head"><h1><?= h($a['subject']) ?></h1><a class="small" href="index.php?p=announce">All announcements</a></div>
+      <section class="card">
+        <p class="muted small">Sent <?= h(gmdate('M j, Y g:i A', strtotime($a['sent_at']))) ?> UTC by <?= h($a['who']) ?> to <?= h($a['audience_label'] ?: $a['audience']) ?>:
+          <?= (int) $a['sent'] ?> sent<?= $a['failed'] ? ', <strong>' . (int) $a['failed'] . ' failed</strong>' : '' ?>.</p>
+        <div class="doc"><?= md($a['body']) ?></div>
       </section>
       <?php
       page_end();
