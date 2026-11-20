@@ -1,6 +1,6 @@
 {
-  "sha": "3b008b38d7a476ef65c0b95a5589964daf58b1a1",
-  "short": "3b008b3",
-  "message": "Build: ask Hostinger to deploy the dashboard after dashboard-site is updated (#16)",
-  "built_at": "2026-11-20T19:07:54Z"
+  "sha": "96afb8e6666c0816db4a3a9ceecd4b4cf2a1d1ae",
+  "short": "96afb8e",
+  "message": "Send Hostinger a GitHub-style deploy request and report its answer (#17)",
+  "built_at": "2026-11-20T19:10:55Z"
 }
