@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 const HQ_ACTIONS = ['chamber_save', 'chamber_refresh', 'chamber_delete', 'org_save', 'org_delete', 'contact_save', 'contact_delete',
   'lead_quick', 'lead_save', 'lead_stage', 'lead_delete', 'lead_to_chamber', 'note_add', 'task_save', 'task_done', 'task_delete',
-  'doc_save', 'doc_delete', 'ask', 'ask_save_doc', 'hq_settings', 'announce_post'];
+  'doc_save', 'doc_delete', 'ask', 'ask_save_doc', 'hq_settings', 'announce_post', 'smtp_save'];
 const HQ_SCREENS = ['home', 'chambers', 'chamber', 'chamber_new', 'leads', 'lead', 'contacts', 'contact', 'orgs', 'org',
   'tasks', 'docs', 'doc', 'doc_edit', 'ask', 'announce', 'announcement'];
 
@@ -419,6 +419,40 @@ function hq_action(string $p, array $user): void {
       }
       flash('Draft saved.');
       redirect('index.php?p=announce');
+    }
+
+    case 'smtp_save': {
+      $do = (string) ($_POST['do'] ?? 'save');
+      if ($do === 'clear') {
+        set_setting('smtp_pass', null);
+        log_activity(null, 'Removed the mailbox password');
+        flash('Mailbox password removed. HQ sends with the web server again.');
+        redirect('index.php?p=settings#email-sending');
+      }
+      $pass = (string) ($_POST['smtp_pass'] ?? '');
+      if ($pass !== '') set_setting('smtp_pass', seal($pass));
+      $userName = strtolower(trim((string) ($_POST['smtp_user'] ?? '')));
+      if ($userName !== '' && filter_var($userName, FILTER_VALIDATE_EMAIL)) set_setting('smtp_user', $userName);
+      $host = trim((string) ($_POST['smtp_host'] ?? ''));
+      if ($host !== '' && preg_match('/^[A-Za-z0-9.-]{3,190}$/', $host)) set_setting('smtp_host', strtolower($host));
+      $port = (int) ($_POST['smtp_port'] ?? 0);
+      if (in_array($port, [465, 587], true)) set_setting('smtp_port', (string) $port);
+      if ($pass !== '') log_activity(null, 'Saved the mailbox password');
+      if ($do === 'test' || $pass !== '') {
+        if (!smtp_settings()) {
+          flash('Paste the mailbox password first.', 'err');
+          redirect('index.php?p=settings#email-sending');
+        }
+        $from = (string) cfg('mail_from', 'info@chamberloop.com');
+        $ok = hq_mail($user['email'], 'Chamber Loop HQ email test',
+          "This test came through the $from mailbox. If it is in your inbox (not spam), HQ email is set up.\n",
+          "From: Chamber Loop HQ <$from>\r\nContent-Type: text/plain; charset=UTF-8");
+        set_setting('smtp_status', $ok ? 'ok ' . now() : 'error ' . now() . ' ' . mb_substr((string) smtp_last_error(), 0, 300));
+        flash($ok ? "Saved. A test email went to {$user['email']} through the mailbox. Check that it landed in your inbox." : 'The mailbox refused: ' . smtp_last_error(), $ok ? 'ok' : 'err');
+        redirect('index.php?p=settings#email-sending');
+      }
+      flash('Saved.');
+      redirect('index.php?p=settings#email-sending');
     }
 
     case 'hq_settings': {
@@ -1287,6 +1321,34 @@ function task_box(array $links, string $back, string $where, array $args): void 
 
 /** Extra cards on the Settings screen. */
 function hq_settings_cards(): void {
+  $smtp = smtp_settings();
+  $status = (string) setting('smtp_status');
+  $from = (string) cfg('mail_from', 'info@chamberloop.com');
+  ?>
+  <section class="card" id="email-sending">
+    <h2>Email sending</h2>
+    <?php if ($smtp): ?>
+      <p><span class="badge ok">On</span> HQ sends announcements, new-lead emails and password resets through the <strong><?= h($smtp['user']) ?></strong> mailbox (<?= h($smtp['host']) ?>), so they are signed and land in inboxes.</p>
+      <?php if (str_starts_with($status, 'error')): ?><p class="flash err">Last test failed: <?= h(substr($status, 26)) ?></p><?php endif; ?>
+    <?php else: ?>
+      <p><span class="badge warn">Off</span> HQ sends with the web server, which often lands in spam. Paste the password of the <?= h($from) ?> mailbox (the one you use for webmail) to send through the mailbox instead.</p>
+    <?php endif; ?>
+    <form method="post" action="index.php?p=smtp_save" class="stack">
+      <?= csrf_field() ?>
+      <label>Mailbox <input name="smtp_user" type="email" value="<?= h(setting('smtp_user') ?: $from) ?>" autocomplete="off"></label>
+      <label>Mailbox password <input name="smtp_pass" type="password" autocomplete="new-password" placeholder="<?= $smtp ? 'Saved. Paste a new one to replace it.' : 'The info@ mailbox password' ?>"></label>
+      <details><summary class="small">Server (normally leave as is)</summary>
+        <div class="row"><label>Server <input name="smtp_host" value="<?= h(setting('smtp_host') ?: SMTP_DEFAULT_HOST) ?>"></label>
+        <label>Port <input name="smtp_port" type="number" value="<?= h(setting('smtp_port') ?: (string) SMTP_DEFAULT_PORT) ?>" style="width:7rem"></label></div>
+      </details>
+      <div class="row">
+        <button class="primary" name="do" value="save">Save and send a test</button>
+        <?php if ($smtp): ?><button name="do" value="test">Send a test</button><button class="link small" name="do" value="clear">Remove password</button><?php endif; ?>
+      </div>
+      <p class="small muted">Stored encrypted on this server. The test goes to your own login email.</p>
+    </form>
+  </section>
+  <?php
   $hasKey = (bool) setting('openai_api_key');
   $secret = lead_hook_secret();
   $base = (is_https() ? 'https://' : 'http://') . ($_SERVER['HTTP_HOST'] ?? 'dashboard.chamberloop.com') . rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? '/'), '/');

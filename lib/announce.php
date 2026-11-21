@@ -1,7 +1,7 @@
 <?php
 /**
  * Email announcements from HQ to CRM contacts, sent one by one from info@chamberloop.com
- * with PHP mail() (Hostinger). Each email has a personal unsubscribe link (unsubscribe.php)
+ * through the info@ mailbox (lib/mailer.php). Each email has a personal unsubscribe link (unsubscribe.php)
  * that sets contacts.do_not_email. Contacts marked "do not email" are never sent to.
  */
 
@@ -107,5 +107,5 @@ function ann_send_one(string $to, string $subject, string $bodyMd, ?int $contact
     . chunk_split(base64_encode(ann_html($subject, $bodyMd, $unsub)))
     . "--$boundary--\r\n";
   $subj = '=?UTF-8?B?' . base64_encode(preg_replace('/[\r\n]+/', ' ', $subject)) . '?=';
-  return @mail($to, $subj, $msg, $headers, '-f' . $from);
+  return hq_mail($to, $subj, $msg, $headers);
 }
