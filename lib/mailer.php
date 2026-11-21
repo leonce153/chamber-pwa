@@ -73,9 +73,18 @@ final class HqSmtp {
       if (!stream_socket_enable_crypto($this->s, true, STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT)) throw new RuntimeException('Could not start encryption');
       $this->cmd("EHLO $host", [250]);
     }
-    $this->cmd('AUTH LOGIN', [334]);
-    $this->cmd(base64_encode($c['user']), [334], true);
-    $this->cmd(base64_encode($c['pass']), [235], true);
+    // Try AUTH PLAIN first, then AUTH LOGIN; name the mailbox and server if both are refused.
+    try {
+      $this->cmd('AUTH PLAIN ' . base64_encode("\0{$c['user']}\0{$c['pass']}"), [235], true);
+    } catch (RuntimeException $e) {
+      try {
+        $this->cmd('AUTH LOGIN', [334]);
+        $this->cmd(base64_encode($c['user']), [334], true);
+        $this->cmd(base64_encode($c['pass']), [235], true);
+      } catch (RuntimeException $e2) {
+        throw new RuntimeException("Login refused for {$c['user']} at {$c['host']}:{$c['port']}. Check the mailbox address and password. Server said: " . preg_replace('/^Login refused: /', '', $e2->getMessage()));
+      }
+    }
   }
 
   public function send(string $from, string $to, string $data): void {
