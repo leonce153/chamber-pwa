@@ -21,6 +21,13 @@ if (!$post && $p === 'mindmaps') {
   mindmaps_screen();
   exit;
 }
+if ($p === 'setup' || $p === 'setup_mark') {
+  require_once __DIR__ . '/setup.php';
+  if ($post && $p === 'setup_mark') setup_action();
+  elseif (!$post && $p === 'setup') setup_screen();
+  else redirect('index.php?p=setup');
+  exit;
+}
 if ($post && in_array($p, HQ_ACTIONS, true)) {
   hq_action($p, $user);
   exit;
@@ -1163,6 +1170,7 @@ function chamber_detail(array $c): void {
       <?php timeline(['chamber_id' => (int) $c['id'], 'org_id' => $c['org_id'] ? (int) $c['org_id'] : null], "index.php?p=chamber&id={$c['id']}", 'chamber_id = ?', [(int) $c['id']]); ?>
     </div>
     <div>
+      <?php require_once __DIR__ . '/setup.php'; setup_card($c); ?>
       <section class="card">
         <h2>Plan</h2>
         <p><?= h(HQ_PLANS[$c['plan']][0] ?? $c['plan']) ?> · <strong><?= money($c['monthly_price']) ?>/mo</strong></p>
