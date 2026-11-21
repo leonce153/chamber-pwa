@@ -18,6 +18,7 @@ Every screen is in the left sidebar (`hq_menu()` in `dashboard/lib/core.php`). A
 | **Tasks** | Your to-do list, linked to a lead, contact, organization or chamber. |
 | **Docs** | The how-to library (Cloudflare, inbound email, Amazon SES, Base44, Hostinger, Stripe…), written in Markdown. |
 | **Ask HQ** | Ask a question; HQ finds the matching docs and answers with OpenAI, citing them. A good answer can be saved as a new doc. |
+| **New chamber setup** | Chambers → New chamber setup. The step-by-step checklist to follow after duplicating a chamber app: create the app, email, AI, website, features, optional services, HQ and phone app, launch. Tick steps per chamber (or mark them Not needed); progress shows on each chamber's page. Steps live in `dashboard/lib/setup.php` (`SETUP_PHASES`); never rename a step key, add a new one. |
 | **Mind maps** | Visual maps of how each kind of user moves through Chamber Loop, with a left sidebar: Chamber managers (built), Business owners and Super admin (coming). Click a box to open its branch and see what it is for. |
 | **Activity** | What the dashboard did to the PWAs. CRM history is on each record. |
 | **Settings** | GitHub, OpenAI key and model, lead inbox address, cron command, password. |
