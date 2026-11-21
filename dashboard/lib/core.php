@@ -266,6 +266,7 @@ function page_start(string $title, string $active = ''): void {
     'tasks' => ['index.php?p=tasks', 'Tasks'],
     'docs' => ['index.php?p=docs', 'Docs'],
     'ask' => ['index.php?p=ask', 'Ask HQ'],
+    'mindmaps' => ['index.php?p=mindmaps', 'Mind maps'],
     'activity' => ['index.php?p=activity', 'Activity'],
     'settings' => ['index.php?p=settings', 'Settings'],
   ];

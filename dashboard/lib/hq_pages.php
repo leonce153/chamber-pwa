@@ -16,6 +16,11 @@ const HQ_ACTIONS = ['chamber_save', 'chamber_refresh', 'chamber_delete', 'org_sa
 const HQ_SCREENS = ['home', 'chambers', 'chamber', 'chamber_new', 'leads', 'lead', 'contacts', 'contact', 'orgs', 'org',
   'tasks', 'docs', 'doc', 'doc_edit', 'ask', 'announce', 'announcement'];
 
+if (!$post && $p === 'mindmaps') {
+  require __DIR__ . '/mindmaps.php';
+  mindmaps_screen();
+  exit;
+}
 if ($post && in_array($p, HQ_ACTIONS, true)) {
   hq_action($p, $user);
   exit;
