@@ -1,0 +1,283 @@
+{
+ "title": "Business owners",
+ "subtitle": "Growth Portal navigation for a business member",
+ "updated": "2026-11-21",
+ "source": "Muleshoe Chamber of Commerce & Agriculture (Base44): src/components/growth-portal/GrowthPortalSidebar.jsx, src/lib/memberFeatureRegistry.js, src/lib/entitlementNavMap.js and AppSetting.feature_toggles",
+ "statusLabels": {
+  "off": "Off for Muleshoe"
+ },
+ "root": {
+  "label": "Business owner portal",
+  "desc": "What a business member sees in the Growth Portal after signing in. Every feature is listed; marks show what is switched off for Muleshoe. Features a member's plan doesn't include move to Add-Ons as upgrades.",
+  "children": [
+   {
+    "label": "Top bar",
+    "desc": "Always visible at the top.",
+    "children": [
+     {
+      "label": "Business selector",
+      "desc": "Owners with more than one business pick which one they're working on."
+     },
+     {
+      "label": "Notification bell",
+      "desc": "Approvals, replies and chamber news for this business."
+     },
+     {
+      "label": "Sign out",
+      "desc": "At the bottom of the sidebar, beside the owner's name and role."
+     }
+    ]
+   },
+   {
+    "label": "Start",
+    "desc": "The first two links in the sidebar.",
+    "children": [
+     {
+      "label": "Growth Center",
+      "path": "/member-portal",
+      "desc": "Home screen: welcome, setup checklist, profile strength, next best step, quick actions, milestones, chamber impact, upcoming chamber events and recent activity.",
+      "children": [
+       {
+        "label": "Setup checklist",
+        "desc": "Steps to finish the account and listing.",
+        "kind": "tab"
+       },
+       {
+        "label": "Profile strength",
+        "desc": "How complete the listing is, and what to add next.",
+        "kind": "tab"
+       },
+       {
+        "label": "Quick actions",
+        "desc": "Shortcuts: post news, add an event, add a deal, post a job.",
+        "kind": "tab"
+       },
+       {
+        "label": "Chamber impact",
+        "desc": "Verified results the chamber sent this business: views, clicks, leads.",
+        "kind": "tab"
+       },
+       {
+        "label": "Business Owner Guide",
+        "desc": "Follow one task at a time: account setup, listing, news, events, deals and jobs.",
+        "kind": "tab"
+       }
+      ]
+     },
+     {
+      "label": "Explore Benefits",
+      "path": "/explore-benefits",
+      "desc": "Everything the membership includes, and what upgrades add."
+     }
+    ]
+   },
+   {
+    "label": "My business",
+    "desc": "The business's own presence.",
+    "children": [
+     {
+      "label": "My Listing",
+      "path": "/my-listing",
+      "desc": "The business profile in the chamber directory: hours, photos, contact, categories. Changes may go to the chamber for approval."
+     },
+     {
+      "label": "Get Found",
+      "path": "/get-found",
+      "desc": "Listing readiness checklist and priority fixes to show up in local search.",
+      "status": "off"
+     },
+     {
+      "label": "My Website",
+      "path": "/my-website",
+      "desc": "Build a simple website for the business from its listing, with a custom domain and analytics.",
+      "status": "off"
+     },
+     {
+      "label": "Reputation",
+      "path": "/reputation",
+      "desc": "Ask happy customers for reviews and track review requests.",
+      "status": "off"
+     },
+     {
+      "label": "My Value",
+      "path": "/my-value",
+      "desc": "What membership has returned this year: views, clicks, leads and savings."
+     }
+    ]
+   },
+   {
+    "label": "Marketing",
+    "desc": "Getting the word out through the chamber.",
+    "children": [
+     {
+      "label": "Marketing",
+      "desc": "Posting tools, grouped in one menu.",
+      "children": [
+       {
+        "label": "AI Marketing Center",
+        "path": "/marketing-center",
+        "desc": "AI first drafts for posts, emails and promotions. Nothing publishes automatically.",
+        "status": "off"
+       },
+       {
+        "label": "Content Calendar",
+        "path": "/marketing-calendar",
+        "desc": "Plan posts and promotions by date.",
+        "status": "off"
+       },
+       {
+        "label": "My News",
+        "path": "/my-news",
+        "desc": "Submit news to the chamber's News page."
+       },
+       {
+        "label": "My Events",
+        "path": "/my-events",
+        "desc": "Submit events to the community calendar."
+       },
+       {
+        "label": "My Deals",
+        "path": "/my-deals",
+        "desc": "Create deals and coupons, with graphics and a campaign kit."
+       },
+       {
+        "label": "My Jobs",
+        "path": "/my-jobs",
+        "desc": "Post job openings to the chamber job board."
+       },
+       {
+        "label": "Send Email",
+        "path": "/portal-email",
+        "desc": "Email the business's own customers through the chamber's system.",
+        "status": "off"
+       }
+      ]
+     },
+     {
+      "label": "Local Deal Drops",
+      "path": "/my-daily-drop",
+      "desc": "Book a timed deal drop slot and manage passes.",
+      "status": "off"
+     },
+     {
+      "label": "My Ads & Sponsorships",
+      "path": "/my-ads",
+      "desc": "Buy and manage banner ads and sponsorships, with reports.",
+      "status": "off"
+     }
+    ]
+   },
+   {
+    "label": "Customers",
+    "desc": "Leads and loyalty.",
+    "children": [
+     {
+      "label": "Lead Inbox",
+      "path": "/lead-inbox",
+      "desc": "Ask Local requests the chamber sent to this business; reply to win the customer."
+     },
+     {
+      "label": "Leads",
+      "path": "/my-leads",
+      "desc": "Lead tracking. No member page yet, so it always shows under Add-Ons as an upgrade.",
+      "status": "off"
+     },
+     {
+      "label": "Hometown Rewards",
+      "path": "/my-rewards",
+      "desc": "Loyalty program: cashier pad to give customers points and rewards.",
+      "status": "off"
+     },
+     {
+      "label": "Shop Local Passport",
+      "path": "/my-passport",
+      "desc": "Stamp passport stop: customers check in to collect stamps.",
+      "status": "off"
+     },
+     {
+      "label": "Referrals",
+      "path": "/referrals",
+      "desc": "Refer other businesses to join the chamber and share a referral link.",
+      "status": "off"
+     },
+     {
+      "label": "Member Marketplace",
+      "path": "/opportunities",
+      "desc": "Member-to-member offers and opportunities; post your own."
+     }
+    ]
+   },
+   {
+    "label": "Chamber",
+    "desc": "Connection to the chamber itself.",
+    "children": [
+     {
+      "label": "Community",
+      "path": "/community",
+      "desc": "Members-only discussion groups and polls.",
+      "status": "off"
+     },
+     {
+      "label": "Chamber Updates",
+      "path": "/portal-updates",
+      "desc": "News from the chamber and documents shared with members. Badge shows unread."
+     },
+     {
+      "label": "Ask AI Business Coach",
+      "path": "/portal-ai",
+      "desc": "AI coach for business questions, using the chamber's resources.",
+      "status": "off"
+     }
+    ]
+   },
+   {
+    "label": "Account",
+    "desc": "Billing and help.",
+    "children": [
+     {
+      "label": "Billing",
+      "desc": "Dues and payments with the chamber. Only useful where the chamber bills through the app (Money is off for Muleshoe).",
+      "children": [
+       {
+        "label": "My Invoices",
+        "path": "/portal-invoices",
+        "desc": "Open and paid invoices; pay online.",
+        "kind": "tab"
+       },
+       {
+        "label": "Payment History",
+        "path": "/portal-payments",
+        "desc": "Every payment made.",
+        "kind": "tab"
+       }
+      ]
+     },
+     {
+      "label": "Help & Resources",
+      "path": "/portal-support",
+      "desc": "Quick how-tos and a direct line to the chamber."
+     }
+    ]
+   },
+   {
+    "label": "Add-Ons",
+    "desc": "Features the member's plan doesn't include move here as upgrades and move back once the plan includes them. Staff can hide the group or single add-ons in Member Portal Settings."
+   },
+   {
+    "label": "Staff only",
+    "desc": "Seen only when chamber staff preview the portal.",
+    "children": [
+     {
+      "label": "Staff Dashboard",
+      "path": "/dashboard",
+      "desc": "Back to the chamber manager dashboard."
+     },
+     {
+      "label": "Business preview",
+      "desc": "Staff pick a business to see the portal as that owner sees it."
+     }
+    ]
+   }
+  ]
+ }
+}
