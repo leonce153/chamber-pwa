@@ -81,7 +81,7 @@
     inner.appendChild(svg);
 
     L.nodes.forEach(function (n) {
-      var b = el('button', 'mm-node' + (n._depth === 0 ? ' root' : '') + (n.kind === 'tab' ? ' tab' : '') +
+      var b = el('button', 'mm-node' + (n._depth === 0 ? ' root' : '') + (n.kind ? ' ' + n.kind : '') +
         (n.status ? ' ' + n.status : '') + (selected === n ? ' sel' : ''));
       b.type = 'button';
       b.style.left = n._x + 'px';
@@ -91,7 +91,7 @@
       var all = n.children || [], ks = kids(n);
       var top = el('span', 'mm-label', n.label);
       b.appendChild(top);
-      var meta = n.status ? labels[n.status] || n.status : (n.path || (all.length ? all.length + (n.kind === 'tab' ? '' : ' inside') : (n.kind === 'tab' ? 'tab' : '')));
+      var meta = n.status ? labels[n.status] || n.status : n.kind === 'svc' ? 'Integration' : (n.uses && n.uses.length ? 'Uses ' + n.uses.join(', ') : (n.path || (all.length ? all.length + (n.kind === 'tab' ? '' : ' inside') : (n.kind === 'tab' ? 'tab' : ''))));
       b.appendChild(el('span', 'mm-meta', meta));
       if (ks.length) {
         b.appendChild(el('span', 'mm-toggle', n._open ? '−' : '+'));
@@ -142,6 +142,19 @@
     detail.appendChild(h);
     if (n.desc) detail.appendChild(el('p', null, n.desc));
     if (n.path) detail.appendChild(el('p', 'small mono', n.path));
+    // Integration details: what a feature uses, or where a service is set up and what uses it.
+    [['uses', 'Integrations used'], ['where', 'Where it is set up'], ['keys', 'Keys and secrets'], ['usedBy', 'Used by'], ['setup', 'New chamber setup']].forEach(function (f) {
+      var v = n[f[0]];
+      if (!v || (Array.isArray(v) && !v.length)) return;
+      var box = el('div', 'mm-field');
+      box.appendChild(el('p', 'mm-field-label', f[1]));
+      if (Array.isArray(v)) {
+        var ul = el('ul');
+        v.forEach(function (x) { ul.appendChild(el('li', null, x)); });
+        box.appendChild(ul);
+      } else box.appendChild(el('p', null, v));
+      detail.appendChild(box);
+    });
     if (n.children && n.children.length) detail.appendChild(el('p', 'small muted', n.children.map(function (c) { return c.label; }).join(' · ')));
   }
 

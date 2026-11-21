@@ -52,6 +52,7 @@ function mindmaps_screen(): void {
         <p class="mm-legend small">
           <span><span class="mm-chip"></span> Page or menu</span>
           <span><span class="mm-chip tab"></span> Tab inside a page</span>
+          <?php if (str_contains(json_encode($map), '"kind":"svc"')): ?><span><span class="mm-chip svc"></span> Integration</span><?php endif; ?>
           <?php foreach (($map['statusLabels'] ?? []) as $s => $sl): ?>
             <span><span class="mm-chip <?= h($s) ?>"></span> <?= h($sl) ?></span>
           <?php endforeach; ?>

@@ -1,0 +1,1254 @@
+{
+ "title": "Super admin",
+ "subtitle": "Platform, every feature and the integrations each one uses",
+ "updated": "2026-11-21",
+ "source": "Muleshoe Chamber of Commerce & Agriculture (Base44): Layout.jsx, roles.js, backend functions, SmtpSetting, AiConciergeSetting, IntegrationSetting, app secrets",
+ "statusLabels": {
+  "off": "Off for Muleshoe"
+ },
+ "root": {
+  "label": "Super admin",
+  "desc": "Everything in a chamber app plus the platform, outside services and integrations. Integrations used are listed on each feature.",
+  "children": [
+   {
+    "label": "Integrations",
+    "desc": "Every outside service, what it is for, where it is set up, its keys, and what uses it. This is the checklist to follow when setting up a new chamber.",
+    "children": [
+     {
+      "label": "Email",
+      "children": [
+       {
+        "label": "Emailit",
+        "desc": "Main outbound email: one-off emails, campaigns, newsletters, invites, approvals, invoices, form notices.",
+        "where": "Platform → Integrations → Email Delivery (SmtpSetting.email_provider = \"emailit\")",
+        "keys": [
+         "EMAILIT_API_KEY",
+         "EMAILIT_WEBHOOK_SECRET (delivery status)",
+         "EMAIL_UNSUBSCRIBE_SECRET (signs unsubscribe links)"
+        ],
+        "usedBy": [
+         "Send an Email",
+         "Email Campaigns",
+         "Newsletters",
+         "Automated Emails",
+         "Approvals",
+         "Ask Local",
+         "Business Trials",
+         "Forms",
+         "Inbox replies",
+         "Invoices",
+         "Email Activity (delivery status)"
+        ],
+        "setup": "Verify the chamber sending domain in Emailit, add the API key and webhook secret, set the from address, then send a test.",
+        "kind": "svc"
+       },
+       {
+        "label": "SMTP (fallback)",
+        "desc": "Optional SMTP sending, e.g. Hostinger mail. Base44 built-in email is the last fallback.",
+        "where": "Platform → Integrations → Email Delivery",
+        "keys": [
+         "SMTP host, user and password (stored in SmtpSetting)"
+        ],
+        "usedBy": [
+         "All email, only when the provider is set to SMTP"
+        ],
+        "setup": "Only if not using Emailit.",
+        "kind": "svc"
+       },
+       {
+        "label": "Amazon SES",
+        "desc": "Not wired into the chamber apps today. Only an HQ docs folder mentions it.",
+        "status": "off",
+        "where": "Nowhere in the app yet",
+        "setup": "Nothing to do unless we switch email providers.",
+        "kind": "svc"
+       },
+       {
+        "label": "Cloudflare Email Routing",
+        "desc": "Inbound email: mail to the chamber address goes through a Cloudflare Email Worker into the Inbox.",
+        "where": "Cloudflare dashboard (Email Routing + Worker) and Platform → Integrations → Inbound Email",
+        "keys": [
+         "INBOX_BRIDGE_SECRET"
+        ],
+        "usedBy": [
+         "Inbox"
+        ],
+        "setup": "Add the chamber domain's routing rule to the worker, set the bridge secret in both places, check Inbound Email status.",
+        "kind": "svc"
+       }
+      ]
+     },
+     {
+      "label": "AI",
+      "children": [
+       {
+        "label": "OpenAI",
+        "desc": "AI Concierge, website builder AI, member website AI, Spanish drafts, Site Text translation, Business Coach.",
+        "where": "Platform → Integrations → AI Concierge (key and model); Website AI tab for builder models",
+        "keys": [
+         "OpenAI API key (AiConciergeSetting)"
+        ],
+        "usedBy": [
+         "Chat",
+         "Knowledge Base",
+         "Pages",
+         "Website Templates",
+         "Site Text",
+         "News Articles (Spanish)",
+         "Business Coach",
+         "Member website AI"
+        ],
+        "setup": "Add the key, pick the models, then ask the Concierge a test question.",
+        "kind": "svc"
+       },
+       {
+        "label": "Base44 AI (InvokeLLM)",
+        "desc": "Base44's built-in AI, billed to Base44 credits. No key needed.",
+        "where": "Built into Base44",
+        "usedBy": [
+         "AI Marketing Center",
+         "Deal campaign kit",
+         "Business Coach",
+         "Content Calendar"
+        ],
+        "setup": "Nothing to set up. Watch Base44 credits.",
+        "kind": "svc"
+       },
+       {
+        "label": "Base44 AI (ExtractData)",
+        "desc": "Reads uploaded files: knowledge base documents and member imports.",
+        "where": "Built into Base44",
+        "usedBy": [
+         "Knowledge Base",
+         "Members & Contacts (import)"
+        ],
+        "setup": "Nothing to set up.",
+        "kind": "svc"
+       },
+       {
+        "label": "alttext.ai",
+        "desc": "Writes alt text for uploaded images.",
+        "where": "Base44 secrets",
+        "keys": [
+         "ALTTEXT_AI_API_KEY"
+        ],
+        "usedBy": [
+         "Media Library"
+        ],
+        "setup": "Add the key.",
+        "kind": "svc"
+       }
+      ]
+     },
+     {
+      "label": "Storage and websites",
+      "children": [
+       {
+        "label": "Cloudflare R2",
+        "desc": "Image and media storage.",
+        "where": "Platform → Integrations → Image Storage",
+        "keys": [
+         "R2_BUCKET_NAME",
+         "R2_PUBLIC_BASE_URL",
+         "R2 access keys"
+        ],
+        "usedBy": [
+         "Media Library",
+         "Pages",
+         "Directory Listings",
+         "Document Library",
+         "Community media"
+        ],
+        "setup": "Use a folder or bucket per chamber and set the public URL.",
+        "kind": "svc"
+       },
+       {
+        "label": "Cloudflare for SaaS",
+        "desc": "Custom domains for member websites.",
+        "where": "Cloudflare dashboard; managed by the manageCustomHostname function",
+        "usedBy": [
+         "Member websites (Growth Portal)"
+        ],
+        "setup": "Only if the chamber sells member websites.",
+        "kind": "svc"
+       },
+       {
+        "label": "Cloudflare edge worker",
+        "desc": "Serves member sites and records visits and form posts at the edge.",
+        "where": "Cloudflare Workers; functions recordEdgeAttributionEvent, submitEdgeForm, resolveEdgeWebsite",
+        "usedBy": [
+         "Analytics (Website tab)",
+         "Forms",
+         "Member websites"
+        ],
+        "setup": "Point the worker at the new app.",
+        "kind": "svc"
+       },
+       {
+        "label": "WordPress",
+        "desc": "Posts news and member listings to a WordPress site.",
+        "where": "Platform → Integrations → WordPress (IntegrationSetting)",
+        "keys": [
+         "WordPress site URL, user and application password"
+        ],
+        "usedBy": [
+         "News Articles",
+         "Directory Listings",
+         "Members"
+        ],
+        "setup": "Only if the chamber keeps a WordPress site.",
+        "kind": "svc"
+       }
+      ]
+     },
+     {
+      "label": "Social, events and texts",
+      "children": [
+       {
+        "label": "TinyCommand webhook",
+        "desc": "Facebook Auto-Post: sends new news, events, deals and jobs to Facebook.",
+        "where": "Settings → Facebook Auto-Post (webhook URL)",
+        "usedBy": [
+         "News Articles",
+         "Events",
+         "Deals",
+         "Jobs"
+        ],
+        "setup": "Build the TinyCommand flow for the chamber's Facebook page and paste its webhook URL.",
+        "kind": "svc"
+       },
+       {
+        "label": "GoBrunch",
+        "desc": "Virtual event rooms and registration.",
+        "where": "Base44 secrets",
+        "keys": [
+         "GOBRUNCH_USER_KEY",
+         "GOBRUNCH_PASSWORD_KEY"
+        ],
+        "usedBy": [
+         "Events (virtual)"
+        ],
+        "setup": "Only if the chamber runs virtual events.",
+        "kind": "svc"
+       },
+       {
+        "label": "Twilio / Easify SMS",
+        "desc": "Text alerts and event reminders. Not set up for Muleshoe.",
+        "status": "off",
+        "where": "Platform → Integrations → SMS Provider",
+        "usedBy": [
+         "Text Alerts",
+         "RSVPs & Check-in reminders"
+        ],
+        "setup": "Pick a provider, add credentials and sender number, turn on Text Alerts.",
+        "kind": "svc"
+       },
+       {
+        "label": "PWA push",
+        "desc": "Push notifications to the installed app, sent through the Hostinger PWA and Gravitec.",
+        "where": "Base44 secrets; HQ → PWAs",
+        "keys": [
+         "PWA_PUSH_URL",
+         "PWA_PUSH_SECRET"
+        ],
+        "usedBy": [
+         "Announcements",
+         "News Articles",
+         "Events",
+         "Deals",
+         "Jobs"
+        ],
+        "setup": "Set both secrets after the PWA is created in HQ.",
+        "kind": "svc"
+       },
+       {
+        "label": "Google / ICS feeds",
+        "desc": "Calendar feeds members can subscribe to.",
+        "where": "Events & Content → Calendar Feeds",
+        "usedBy": [
+         "Calendar Feeds"
+        ],
+        "setup": "Nothing to set up.",
+        "kind": "svc"
+       }
+      ]
+     },
+     {
+      "label": "Payments",
+      "children": [
+       {
+        "label": "Stripe",
+        "desc": "Payments, invoices, dues and sponsor ad checkout. Finance is off for Muleshoe.",
+        "status": "off",
+        "where": "Settings → Payment Gateways; Base44 secrets",
+        "keys": [
+         "STRIPE_SECRET_KEY"
+        ],
+        "usedBy": [
+         "Invoices",
+         "Payments",
+         "Membership Plans",
+         "Sponsorships & Ads",
+         "Add-Ons"
+        ],
+        "setup": "Connect the chamber's own Stripe account, then turn Money on in Chamber Features.",
+        "kind": "svc"
+       }
+      ]
+     },
+     {
+      "label": "Timing",
+      "children": [
+       {
+        "label": "Scheduled Jobs",
+        "desc": "Hourly runner for anything timed.",
+        "where": "Base44 → Workflows (runScheduledJobs)",
+        "usedBy": [
+         "Newsletters",
+         "Email Campaigns",
+         "Automated Emails",
+         "Renewals",
+         "Business Trials"
+        ],
+        "setup": "See Outside the app → Scheduled Jobs.",
+        "kind": "svc"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "label": "Platform",
+    "desc": "Super admin only. Platform settings inside each chamber app (Muleshoe sidebar → Platform).",
+    "children": [
+     {
+      "label": "Chamber Features",
+      "path": "/platform?tab=features",
+      "desc": "Turn whole features on or off for this chamber (AppSetting.feature_toggles). The \"off\" marks on this map come from here."
+     },
+     {
+      "label": "Member Features",
+      "path": "/platform?tab=member_features",
+      "desc": "Decide which Growth Portal features each membership tier gets. Anything not included shows as an Add-On."
+     },
+     {
+      "label": "Billing & Limits",
+      "path": "/platform?tab=billing",
+      "desc": "Plan limits and usage caps for this chamber (emails, AI, storage)."
+     },
+     {
+      "label": "Integrations",
+      "path": "/platform?tab=integrations",
+      "desc": "Platform → Integrations. One tab per outside service. Full detail for each service is in the Integrations branch of this map.",
+      "children": [
+       {
+        "label": "WordPress",
+        "kind": "tab",
+        "desc": "Post news and member listings to a WordPress site.",
+        "uses": [
+         "WordPress"
+        ]
+       },
+       {
+        "label": "Email Delivery",
+        "kind": "tab",
+        "desc": "Pick the email provider (Emailit, SMTP or built-in) and the from address.",
+        "uses": [
+         "Emailit"
+        ]
+       },
+       {
+        "label": "Inbound Email",
+        "kind": "tab",
+        "desc": "Connect the chamber address so replies land in the Inbox.",
+        "uses": [
+         "Cloudflare Email Routing"
+        ]
+       },
+       {
+        "label": "Image Storage",
+        "kind": "tab",
+        "desc": "Where uploaded images and media are stored.",
+        "uses": [
+         "Cloudflare R2"
+        ]
+       },
+       {
+        "label": "SMS Provider",
+        "kind": "tab",
+        "desc": "Text alert provider and sender number.",
+        "uses": [
+         "Twilio / Easify SMS"
+        ]
+       },
+       {
+        "label": "Website AI",
+        "kind": "tab",
+        "desc": "Models used by the website builder AI and translations.",
+        "uses": [
+         "OpenAI"
+        ]
+       },
+       {
+        "label": "AI Concierge",
+        "kind": "tab",
+        "desc": "The OpenAI key and model for the AI Concierge. directAi reuses this key.",
+        "uses": [
+         "OpenAI"
+        ]
+       }
+      ]
+     },
+     {
+      "label": "Permissions & Super Admins",
+      "path": "/platform?tab=user_roles",
+      "desc": "Per-chamber permission overrides (AppSetting.permission_overrides) and who is a super admin."
+     },
+     {
+      "label": "Integration Usage Log",
+      "path": "/platform?tab=usage_log",
+      "desc": "Every call to an outside service (email, AI, SMS) with cost and result. First place to look when something did not send."
+     },
+     {
+      "label": "Platform Audit Log",
+      "path": "/platform?tab=audit_log",
+      "desc": "Who changed platform settings and when."
+     },
+     {
+      "label": "Edit Training Guide",
+      "path": "/training-guide/edit",
+      "desc": "Edit the Training Guide directors see in the sidebar footer."
+     }
+    ]
+   },
+   {
+    "label": "Inside a chamber app",
+    "desc": "Every screen in a Base44 chamber app (Muleshoe shown). Each feature lists the integrations it uses.",
+    "children": [
+     {
+      "label": "Top bar",
+      "desc": "Always visible at the top of every page.",
+      "children": [
+       {
+        "label": "Search navigation",
+        "desc": "Type to filter the sidebar to matching pages."
+       },
+       {
+        "label": "Page title",
+        "desc": "Shows '<chamber> Portal - <current page>'."
+       },
+       {
+        "label": "Community review bell",
+        "desc": "Posts waiting for review in the Community. Only shows when Community is on.",
+        "status": "off"
+       },
+       {
+        "label": "User menu",
+        "desc": "Name, email and role.",
+        "children": [
+         {
+          "label": "My Listing",
+          "path": "/my-listing",
+          "desc": "The director's own business listing in the directory."
+         },
+         {
+          "label": "Sign out",
+          "desc": "Ends the session."
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "label": "Daily work",
+      "desc": "Sidebar heading: what a manager checks every day.",
+      "children": [
+       {
+        "label": "Dashboard",
+        "path": "/dashboard",
+        "desc": "Home screen: to-do list, what needs attention, content previews and quick links."
+       },
+       {
+        "label": "Community Management",
+        "path": "/community-management",
+        "desc": "Run the members-only community: groups, posts, moderation, launch kit and analytics.",
+        "status": "off"
+       },
+       {
+        "label": "Approvals",
+        "path": "/approvals",
+        "desc": "One queue for everything members submit: listing changes, news, events, jobs, deals and live member posts.",
+        "uses": [
+         "Emailit"
+        ]
+       },
+       {
+        "label": "Communications",
+        "desc": "Email, newsletters and announcements.",
+        "children": [
+         {
+          "label": "Inbox",
+          "path": "/inbox",
+          "desc": "The chamber's shared inbound email: read, reply, forward, spam rules.",
+          "uses": [
+           "Cloudflare Email Routing",
+           "Emailit"
+          ]
+         },
+         {
+          "label": "Send an Email",
+          "path": "/send-email?tab=compose",
+          "desc": "Write and send a one-off email to members or a group.",
+          "uses": [
+           "Emailit"
+          ]
+         },
+         {
+          "label": "Email Campaigns",
+          "path": "/send-email?tab=campaigns",
+          "desc": "Send newsletters and announcements to members or a segment, and see who opened them.",
+          "uses": [
+           "Emailit",
+           "Scheduled Jobs"
+          ]
+         },
+         {
+          "label": "Newsletters",
+          "path": "/send-email?tab=newsletters",
+          "desc": "Design newsletters from templates, schedule the automatic newsletter, and manage subscribers.",
+          "children": [
+           {
+            "label": "Newsletters",
+            "path": "/send-email?tab=newsletters",
+            "desc": "Design and send a newsletter.",
+            "kind": "tab",
+            "uses": [
+             "Emailit",
+             "Scheduled Jobs"
+            ]
+           },
+           {
+            "label": "Auto newsletter",
+            "path": "/send-email?tab=auto",
+            "desc": "Newsletter built and sent automatically on a schedule.",
+            "kind": "tab"
+           },
+           {
+            "label": "Archive",
+            "path": "/send-email?tab=archive",
+            "desc": "Past issues.",
+            "kind": "tab"
+           },
+           {
+            "label": "Subscribers",
+            "path": "/send-email?tab=subscribers",
+            "desc": "Who receives the newsletter.",
+            "kind": "tab"
+           }
+          ],
+          "uses": [
+           "Emailit",
+           "Scheduled Jobs"
+          ]
+         },
+         {
+          "label": "Announcements",
+          "path": "/announcements",
+          "desc": "Notices in the member portal: office closures, deadlines, new benefits.",
+          "uses": [
+           "Emailit",
+           "PWA push"
+          ]
+         },
+         {
+          "label": "Automated Emails",
+          "path": "/automations",
+          "desc": "Emails that send themselves on a trigger, like welcome or renewal reminders.",
+          "uses": [
+           "Emailit",
+           "Scheduled Jobs"
+          ]
+         },
+         {
+          "label": "Audiences & Templates",
+          "desc": "Reusable email designs and saved groups of contacts.",
+          "children": [
+           {
+            "label": "Templates",
+            "path": "/email-templates",
+            "desc": "Saved email designs.",
+            "kind": "tab"
+           },
+           {
+            "label": "Audiences",
+            "path": "/segments",
+            "desc": "Saved groups of contacts, like board members or new members, to email in one step.",
+            "kind": "tab"
+           },
+           {
+            "label": "Excluded Addresses",
+            "path": "/suppression-list",
+            "desc": "Addresses that never get email (unsubscribed or bounced).",
+            "kind": "tab"
+           }
+          ]
+         },
+         {
+          "label": "Email Activity",
+          "path": "/send-email?tab=activity",
+          "desc": "Delivery log: sent, opened, bounced, failed.",
+          "uses": [
+           "Emailit"
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "label": "Members and programs",
+      "desc": "Sidebar heading: the member businesses and the programs offered to them.",
+      "children": [
+       {
+        "label": "Members",
+        "desc": "Member businesses and the people at them.",
+        "children": [
+         {
+          "label": "Members & Contacts",
+          "path": "/members",
+          "desc": "The member list that powers the directory, renewals, invoices and email.",
+          "uses": [
+           "Base44 AI (ExtractData)",
+           "WordPress"
+          ]
+         },
+         {
+          "label": "Directory Listings",
+          "path": "/admin/directory",
+          "desc": "The public business directory entries: edit, feature, hide.",
+          "uses": [
+           "WordPress",
+           "Cloudflare R2"
+          ]
+         },
+         {
+          "label": "Renewals",
+          "path": "/membership-renewals",
+          "desc": "Memberships coming due or lapsed, and renewal follow-up.",
+          "uses": [
+           "Emailit",
+           "Scheduled Jobs"
+          ]
+         },
+         {
+          "label": "Leads",
+          "path": "/lead-management",
+          "desc": "Prospective members: track and follow up until they join."
+         },
+         {
+          "label": "Notes & Engagement",
+          "desc": "Private staff notes and each member's engagement.",
+          "children": [
+           {
+            "label": "Notes",
+            "path": "/member-notes",
+            "desc": "Private staff notes about members: calls, visits, follow-ups.",
+            "kind": "tab"
+           },
+           {
+            "label": "Engagement",
+            "path": "/engagement",
+            "desc": "How active each member is: logins, posts, event visits.",
+            "kind": "tab"
+           }
+          ]
+         },
+         {
+          "label": "Business Trials",
+          "path": "/business-trials",
+          "desc": "Businesses trying the chamber's member tools before joining.",
+          "uses": [
+           "Emailit",
+           "Scheduled Jobs"
+          ]
+         },
+         {
+          "label": "Community Contributors",
+          "path": "/community-contributors",
+          "desc": "Local people approved to post news and stories to the site."
+         },
+         {
+          "label": "Onboarding",
+          "path": "/onboarding-flows",
+          "desc": "Step-by-step welcome flows and welcome emails for new members."
+         }
+        ]
+       },
+       {
+        "label": "Member Programs",
+        "desc": "Programs that drive customers to member businesses.",
+        "children": [
+         {
+          "label": "Deals",
+          "desc": "Member deals and coupons shown on the public site.",
+          "children": [
+           {
+            "label": "All Deals",
+            "path": "/deals-approve",
+            "desc": "Review and approve deals.",
+            "kind": "tab"
+           },
+           {
+            "label": "Featured",
+            "path": "/deals-feature",
+            "desc": "Pick deals to feature.",
+            "kind": "tab"
+           },
+           {
+            "label": "Expiring",
+            "path": "/deals-expire",
+            "desc": "Deals about to end.",
+            "kind": "tab"
+           },
+           {
+            "label": "Redemptions & Clicks",
+            "path": "/deals-redemptions",
+            "desc": "How deals perform.",
+            "kind": "tab"
+           }
+          ],
+          "uses": [
+           "TinyCommand webhook",
+           "PWA push"
+          ]
+         },
+         {
+          "label": "Ask Local",
+          "path": "/ask-local-requests",
+          "desc": "Requests from the public asking for a local business; route them to members as leads.",
+          "uses": [
+           "Emailit"
+          ]
+         },
+         {
+          "label": "Local Deal Drops",
+          "path": "/daily-drop-admin",
+          "desc": "Timed deal drops with a countdown and booking passes.",
+          "status": "off"
+         },
+         {
+          "label": "Hometown Rewards",
+          "path": "/hometown-rewards-admin",
+          "desc": "Shop-local loyalty program: customers earn rewards at member businesses.",
+          "status": "off"
+         },
+         {
+          "label": "Hometown Champions",
+          "path": "/hometown-champions-admin",
+          "desc": "Recognize and spotlight local champions.",
+          "status": "off"
+         },
+         {
+          "label": "Shop Local Passport",
+          "path": "/shop-local-passport-admin",
+          "desc": "Stamp passport: visit member businesses to collect stamps.",
+          "status": "off"
+         },
+         {
+          "label": "Sponsorships & Ads",
+          "path": "/sponsorships",
+          "desc": "Sell and place sponsor ads and banners, with measurement reports.",
+          "status": "off",
+          "uses": [
+           "Stripe"
+          ]
+         }
+        ]
+       },
+       {
+        "label": "Events & Content",
+        "desc": "What fills the public site.",
+        "children": [
+         {
+          "label": "Events",
+          "path": "/admin/events",
+          "desc": "Create chamber events and review member-submitted events.",
+          "uses": [
+           "GoBrunch",
+           "TinyCommand webhook",
+           "PWA push"
+          ]
+         },
+         {
+          "label": "Calendar Feeds",
+          "path": "/calendar-feeds",
+          "desc": "Pull events in from outside community calendars, then review them.",
+          "uses": [
+           "Google / ICS feeds"
+          ]
+         },
+         {
+          "label": "RSVPs & Check-in",
+          "path": "/event-rsvps",
+          "desc": "Who is coming, and check-in at the door.",
+          "uses": [
+           "Emailit",
+           "Twilio / Easify SMS"
+          ]
+         },
+         {
+          "label": "News Articles",
+          "path": "/news-management",
+          "desc": "News on the public News page that keeps the site fresh for visitors and search engines.",
+          "uses": [
+           "TinyCommand webhook",
+           "PWA push",
+           "OpenAI"
+          ]
+         },
+         {
+          "label": "Jobs",
+          "path": "/admin/jobs",
+          "desc": "Job board of openings at member businesses.",
+          "uses": [
+           "TinyCommand webhook",
+           "PWA push"
+          ]
+         },
+         {
+          "label": "Content Calendar",
+          "path": "/content-calendar",
+          "desc": "One calendar of everything scheduled: events, news, emails.",
+          "uses": [
+           "Base44 AI (InvokeLLM)"
+          ]
+         }
+        ]
+       },
+       {
+        "label": "Document Library",
+        "path": "/document-library",
+        "desc": "Bylaws, minutes, visitor guides and membership packets for staff and members.",
+        "uses": [
+         "Cloudflare R2"
+        ]
+       }
+      ]
+     },
+     {
+      "label": "Run the chamber",
+      "desc": "Sidebar heading: website, money, reports, AI and settings.",
+      "children": [
+       {
+        "label": "Website",
+        "desc": "The chamber's public website.",
+        "children": [
+         {
+          "label": "Media Library",
+          "path": "/media-library",
+          "desc": "All images and files used on the site.",
+          "uses": [
+           "Cloudflare R2",
+           "alttext.ai"
+          ]
+         },
+         {
+          "label": "Site Text",
+          "path": "/content-management",
+          "desc": "Edit the words on the site without touching the layout.",
+          "uses": [
+           "OpenAI"
+          ]
+         },
+         {
+          "label": "Forms",
+          "path": "/forms",
+          "desc": "Build forms (sign-ups, applications) and see responses.",
+          "uses": [
+           "Emailit",
+           "Cloudflare edge worker"
+          ]
+         },
+         {
+          "label": "Pages",
+          "path": "/site-admin/pages",
+          "desc": "Page builder: add pages and sections, header and footer menus, publish.",
+          "uses": [
+           "OpenAI",
+           "Cloudflare R2"
+          ]
+         },
+         {
+          "label": "Theme",
+          "path": "/theme-designer",
+          "desc": "Colors, fonts and look of the site."
+         },
+         {
+          "label": "Website Templates",
+          "path": "/website-templates",
+          "desc": "Start the site from a ready-made design. Super admin only: applying one replaces the whole site.",
+          "uses": [
+           "OpenAI"
+          ]
+         }
+        ]
+       },
+       {
+        "label": "Money",
+        "desc": "Dues, invoices and payments.",
+        "status": "off",
+        "children": [
+         {
+          "label": "Invoices",
+          "path": "/invoices",
+          "desc": "Bill members for dues, events and sponsorships, and track what's been paid.",
+          "status": "off",
+          "uses": [
+           "Stripe",
+           "Emailit"
+          ]
+         },
+         {
+          "label": "Payments",
+          "desc": "Money received and each member's billing state.",
+          "status": "off",
+          "children": [
+           {
+            "label": "Payment History",
+            "path": "/payment-history",
+            "desc": "Every payment received.",
+            "kind": "tab"
+           },
+           {
+            "label": "Billing Status",
+            "path": "/billing-status",
+            "desc": "Who is paid up and who is overdue.",
+            "kind": "tab"
+           }
+          ],
+          "uses": [
+           "Stripe"
+          ]
+         },
+         {
+          "label": "Membership Plans",
+          "desc": "Membership levels and what they cost.",
+          "status": "off",
+          "children": [
+           {
+            "label": "Tiers",
+            "path": "/membership-tiers",
+            "desc": "Membership levels and the benefits in each.",
+            "kind": "tab"
+           },
+           {
+            "label": "Pricing",
+            "path": "/membership-pricing",
+            "desc": "Prices, and an embeddable pricing table.",
+            "kind": "tab"
+           }
+          ],
+          "uses": [
+           "Stripe"
+          ]
+         }
+        ]
+       },
+       {
+        "label": "Reports",
+        "desc": "Numbers for staff and the board.",
+        "children": [
+         {
+          "label": "Analytics",
+          "desc": "Charts on members, chamber activity and website traffic.",
+          "children": [
+           {
+            "label": "Membership",
+            "path": "/membership-analytics",
+            "desc": "Growth, renewals and churn.",
+            "kind": "tab"
+           },
+           {
+            "label": "Chamber",
+            "path": "/chamber-analytics",
+            "desc": "Activity across the chamber's programs.",
+            "kind": "tab"
+           },
+           {
+            "label": "Website",
+            "path": "/website-analytics",
+            "desc": "Visitors and what they look at.",
+            "kind": "tab"
+           }
+          ],
+          "uses": [
+           "Cloudflare edge worker"
+          ]
+         },
+         {
+          "label": "Board Reports",
+          "path": "/board-reports",
+          "desc": "Ready-made reports to share at board meetings."
+         },
+         {
+          "label": "Audit Log",
+          "path": "/audit-log",
+          "desc": "Who changed what, and when."
+         }
+        ]
+       },
+       {
+        "label": "AI Concierge",
+        "desc": "The AI assistant that answers visitors' questions about the chamber and town.",
+        "children": [
+         {
+          "label": "Chat",
+          "path": "/ai-concierge",
+          "desc": "Try the concierge yourself.",
+          "uses": [
+           "OpenAI"
+          ]
+         },
+         {
+          "label": "Knowledge Base",
+          "path": "/ai-concierge/knowledge-base",
+          "desc": "What the concierge knows: facts and answers you add.",
+          "uses": [
+           "OpenAI",
+           "Base44 AI (ExtractData)"
+          ]
+         },
+         {
+          "label": "Insights",
+          "desc": "What people ask and how well it answers.",
+          "children": [
+           {
+            "label": "Chat Logs",
+            "path": "/ai-concierge/chat-logs",
+            "desc": "Past conversations.",
+            "kind": "tab"
+           },
+           {
+            "label": "Unanswered Questions",
+            "path": "/ai-concierge/unanswered-questions",
+            "desc": "Questions it couldn't answer: add these to the knowledge base.",
+            "kind": "tab"
+           },
+           {
+            "label": "Recommendation Insights",
+            "path": "/ai-concierge/recommendation-insights",
+            "desc": "Which businesses it recommended.",
+            "kind": "tab"
+           }
+          ]
+         },
+         {
+          "label": "Concierge Branding",
+          "path": "/settings?tab=concierge_branding",
+          "desc": "The concierge's name, look and greeting."
+         }
+        ]
+       },
+       {
+        "label": "Settings",
+        "desc": "The chamber's own settings.",
+        "children": [
+         {
+          "label": "Privacy & Analytics",
+          "path": "/settings?tab=privacy_analytics",
+          "desc": "Cookie consent and what visitor data is collected (English/Spanish)."
+         },
+         {
+          "label": "Chamber Profile & Branding",
+          "desc": "Logo, colors, name and contact details.",
+          "children": [
+           {
+            "label": "Branding",
+            "path": "/settings?tab=branding",
+            "desc": "Logo and colors in the portal.",
+            "kind": "tab"
+           },
+           {
+            "label": "Chamber Info & Contact",
+            "path": "/site-settings",
+            "desc": "Address, phone, hours, social links.",
+            "kind": "tab"
+           }
+          ]
+         },
+         {
+          "label": "Team & Roles",
+          "desc": "Staff accounts and what each can do.",
+          "children": [
+           {
+            "label": "Team & Roles",
+            "path": "/director-user-roles",
+            "desc": "Invite staff and set roles.",
+            "kind": "tab"
+           },
+           {
+            "label": "Staff Directory",
+            "path": "/staff-directory",
+            "desc": "Staff list shown to members.",
+            "kind": "tab"
+           }
+          ]
+         },
+         {
+          "label": "Member Portal Settings",
+          "path": "/member-portal-settings",
+          "desc": "What business members see in their portal."
+         },
+         {
+          "label": "Directory",
+          "desc": "How the public directory works.",
+          "children": [
+           {
+            "label": "Settings",
+            "path": "/directory-settings",
+            "desc": "Search options and layout.",
+            "kind": "tab"
+           },
+           {
+            "label": "Categories",
+            "path": "/directory-categories",
+            "desc": "Business categories, like Restaurants or Agriculture.",
+            "kind": "tab"
+           }
+          ]
+         },
+         {
+          "label": "Payment Gateways",
+          "path": "/payment-settings",
+          "desc": "Connect a payment provider so members can pay dues online.",
+          "status": "off",
+          "uses": [
+           "Stripe"
+          ]
+         },
+         {
+          "label": "Facebook Auto-Post",
+          "path": "/settings?tab=facebook_autopost",
+          "desc": "Post new news, events and deals to the chamber's Facebook page automatically.",
+          "uses": [
+           "TinyCommand webhook"
+          ]
+         },
+         {
+          "label": "Text Alerts",
+          "path": "/settings?tab=text_alerts",
+          "desc": "SMS alerts to opted-in members: which alerts and when.",
+          "status": "off",
+          "uses": [
+           "Twilio / Easify SMS"
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "label": "Sidebar footer",
+      "desc": "Links at the bottom of the sidebar.",
+      "children": [
+       {
+        "label": "Support",
+        "path": "/support-tickets",
+        "desc": "Support tickets to Chamber Loop."
+       },
+       {
+        "label": "Training Guide",
+        "path": "/training-guide",
+        "desc": "How-to guide for chamber staff."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "label": "Growth Portal (members)",
+    "desc": "What business members see. Its full map is under Mind maps → Business owners.",
+    "path": "?p=mindmaps&m=business-owners",
+    "uses": [
+     "Emailit",
+     "OpenAI",
+     "Cloudflare for SaaS",
+     "Stripe"
+    ],
+    "children": [
+     {
+      "label": "Member website",
+      "desc": "Member websites with custom domains.",
+      "uses": [
+       "Cloudflare for SaaS",
+       "Cloudflare edge worker",
+       "OpenAI"
+      ]
+     },
+     {
+      "label": "Business Coach",
+      "desc": "AI coaching for members.",
+      "uses": [
+       "OpenAI",
+       "Base44 AI (InvokeLLM)"
+      ]
+     },
+     {
+      "label": "AI Marketing Center",
+      "desc": "Drafts posts and campaigns for members.",
+      "uses": [
+       "Base44 AI (InvokeLLM)"
+      ]
+     },
+     {
+      "label": "Add-Ons and upgrades",
+      "desc": "Features outside a member's tier. Set in Platform → Member Features.",
+      "uses": [
+       "Stripe"
+      ]
+     }
+    ]
+   },
+   {
+    "label": "Outside the app",
+    "desc": "Pieces that live outside the Base44 app but every chamber depends on.",
+    "children": [
+     {
+      "label": "Chamber Loop HQ",
+      "desc": "This dashboard. Reads each chamber app every 4 hours through its hqConnector function.",
+      "where": "dashboard.chamberloop.com (Hostinger), code in GitHub chamber-pwa/dashboard",
+      "keys": [
+       "HQ_CONNECTOR_KEY (in each chamber app and in HQ)"
+      ],
+      "setup": "Add the chamber in HQ → Chambers → Add and paste its HQ connector key."
+     },
+     {
+      "label": "PWA (installable app)",
+      "desc": "The phone app members install. Push notifications go through Gravitec.",
+      "where": "Hostinger, managed in HQ → PWAs",
+      "keys": [
+       "PWA_PUSH_URL",
+       "PWA_PUSH_SECRET"
+      ],
+      "uses": [
+       "PWA push"
+      ],
+      "setup": "Create the PWA in HQ → PWAs, then put its push URL and secret in the chamber app secrets."
+     },
+     {
+      "label": "Scheduled Jobs",
+      "desc": "Hourly Base44 workflow that runs runScheduledJobs (newsletters, renewals, reminders, trials).",
+      "where": "Base44 app → Workflows",
+      "setup": "Check the workflow exists and runs hourly, 6 AM to 10 PM Central."
+     },
+     {
+      "label": "Base44 app secrets",
+      "desc": "All API keys live in the Base44 app's environment secrets, not in the code.",
+      "where": "Base44 editor → Settings → Secrets",
+      "setup": "Duplicated apps do not reliably carry secrets. Re-enter every key from the Integrations branch."
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -199,6 +199,12 @@ main:has(.mm-shell) { max-width: none; }
 .mm-detail { position: sticky; top: 1rem; margin: 0; }
 .mm-detail h2 { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
 .mm-trail { margin: 0 0 .3rem; }
+.mm-field { margin-top: .7rem; }
+.mm-field-label { margin: 0 0 .2rem; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.mm-field p:not(.mm-field-label) { margin: 0; }
+.mm-field ul { margin: 0; padding-left: 1.1rem; font-size: .92rem; }
+.mm-node.svc { border-left-width: 4px; background: var(--bg); }
+.mm-chip.svc { background: var(--bg); }
 @media (max-width: 760px) {
   .mm-shell { grid-template-columns: 1fr; }
 }
