@@ -16,6 +16,7 @@ Hostinger with no Base44 credits. It replaces the Base44 "ChamberLoop Setup Mana
 | **Tasks** | Your to-do list, linked to a lead, contact, organization or chamber. |
 | **Docs** | The how-to library (Cloudflare, inbound email, Amazon SES, Base44, Hostinger, Stripe…), written in Markdown. |
 | **Ask HQ** | Ask a question; HQ finds the matching docs and answers with OpenAI, citing them. A good answer can be saved as a new doc. |
+| **Mind maps** | Visual maps of how each kind of user moves through Chamber Loop, with a left sidebar: Chamber managers (built), Business owners and Super admin (coming). Click a box to open its branch and see what it is for. |
 | **Activity** | What the dashboard did to the PWAs. CRM history is on each record. |
 | **Settings** | GitHub, OpenAI key and model, lead inbox address, cron command, password. |
 
@@ -145,3 +146,14 @@ New tables (created by Settings → *Apply dashboard database updates*): `chambe
 
 Two-step sign-in; Stripe billing (test mode first); AI
 cost per chamber from the OpenAI admin key; reports.
+
+## Mind maps
+
+Each map is a JSON file in `dashboard/lib/mindmaps/` (`chamber-managers.json`, and later
+`business-owners.json` and `super-admin.json`). The list in the sidebar is `MINDMAPS` in
+`dashboard/lib/mindmaps.php`; a map with no file yet shows as "coming soon". `lib/` is blocked from
+the web, so the maps are only seen after signing in.
+
+A node is `{ "label", "path"?, "desc"?, "status"?, "kind"?, "children"? }`. `status` is a key of the
+map's `statusLabels` (for example `off` = off for Muleshoe, `super` = super admin only); `kind: "tab"`
+draws a tab inside a page. When a feature is added, add its node and bump `updated`.
