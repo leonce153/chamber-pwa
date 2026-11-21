@@ -13,7 +13,8 @@ Every screen is in the left sidebar (`hq_menu()` in `dashboard/lib/core.php`). A
 | **Home** | Today: tasks and follow-ups due, new leads, chambers that need attention, monthly revenue. Chamber cards on top, PWA cards below. |
 | **Chambers** | One card per chamber on the platform: status (onboarding, live, grace, paused), plan and price, sponsor, member count, links to the site, admin and Base44 editor, and live numbers from its HQ connector. |
 | **PWAs** | The original dashboard: Apps, Updates, Notifications, Template (see DASHBOARD.md). |
-| **Leads** | Two pipelines, **Chambers** and **Sponsors**, as a board or a list. Each lead has a next step and due date, notes and history, and can become a chamber card when won. |
+| **Leads** | Two pipelines, **Chambers** and **Sponsors**, as a board or a list. Each lead has a next step and due date, notes and history, and can become a chamber card when won. Filter by state, stage or name. |
+| **Import chambers (CSV)** | Leads → Import chambers. Upload or paste a CSV (or a Markdown table) with `name, city, state, website, phone, email, contact_name, contact_title, source_url`; only name and state are required. A preview shows what will happen before anything is saved. New chambers become a prospect organization with a lead in the **Prospect** stage (no follow-up date, and left out of announcements until moved on). A chamber already in HQ with the same name and state is never added twice: re-importing only fills in its blank fields (website, phone, email, contact, source link). Code: `dashboard/lib/import.php`. |
 | **Contacts** | People and organizations (chambers, sponsors, partners, vendors). |
 | **Tasks** | Your to-do list, linked to a lead, contact, organization or chamber. |
 | **Docs** | The how-to library (Cloudflare, inbound email, Amazon SES, Base44, Hostinger, Stripe…), written in Markdown. |

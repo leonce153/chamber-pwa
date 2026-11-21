@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 define('DASH_ROOT', dirname(__DIR__));
 define('DASH_CONFIG', DASH_ROOT . '/data/config.php');
-define('DASH_VERSION', '1.4.0');
+define('DASH_VERSION', '1.5.0');
 
 date_default_timezone_set('UTC');
 
@@ -59,7 +59,7 @@ const DASH_TABLES = [
   'login_attempts' => "id INT AUTO_INCREMENT PRIMARY KEY, ip VARCHAR(64) NOT NULL, created_at DATETIME NOT NULL, KEY ip (ip)",
   // ---- HQ: chambers on the Base44 platform, CRM, docs ----
   'chambers' => "id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(190) NOT NULL, town VARCHAR(120) NULL, state VARCHAR(40) NULL, status VARCHAR(20) NOT NULL DEFAULT 'onboarding', plan VARCHAR(30) NOT NULL DEFAULT 'founding', monthly_price DECIMAL(10,2) NULL, org_id INT NULL, sponsor_org_id INT NULL, member_count INT NULL, site_url VARCHAR(255) NULL, admin_url VARCHAR(255) NULL, base44_app_id VARCHAR(64) NULL, app_id INT NULL, connector_url VARCHAR(255) NULL, connector_key TEXT NULL, grace_ends DATE NULL, notes TEXT NULL, snapshot_json MEDIUMTEXT NULL, snapshot_at DATETIME NULL, snapshot_error VARCHAR(500) NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, KEY org_id (org_id), KEY app_id (app_id)",
-  'orgs' => "id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(190) NOT NULL, kind VARCHAR(20) NOT NULL DEFAULT 'prospect', town VARCHAR(120) NULL, state VARCHAR(40) NULL, website VARCHAR(255) NULL, member_count INT NULL, current_software VARCHAR(120) NULL, notes TEXT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, KEY name (name), KEY kind (kind)",
+  'orgs' => "id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(190) NOT NULL, kind VARCHAR(20) NOT NULL DEFAULT 'prospect', town VARCHAR(120) NULL, state VARCHAR(40) NULL, website VARCHAR(255) NULL, phone VARCHAR(60) NULL, email VARCHAR(190) NULL, source_url VARCHAR(255) NULL, member_count INT NULL, current_software VARCHAR(120) NULL, notes TEXT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, KEY name (name), KEY kind (kind), KEY state (state)",
   'contacts' => "id INT AUTO_INCREMENT PRIMARY KEY, org_id INT NULL, name VARCHAR(190) NOT NULL, title VARCHAR(120) NULL, email VARCHAR(190) NULL, phone VARCHAR(60) NULL, do_not_email TINYINT(1) NOT NULL DEFAULT 0, notes TEXT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, KEY org_id (org_id), KEY email (email)",
   'deals' => "id INT AUTO_INCREMENT PRIMARY KEY, org_id INT NULL, contact_id INT NULL, pipeline VARCHAR(20) NOT NULL DEFAULT 'chamber', title VARCHAR(190) NOT NULL, stage VARCHAR(30) NOT NULL DEFAULT 'new', value_monthly DECIMAL(10,2) NULL, source VARCHAR(60) NULL, next_step VARCHAR(255) NULL, next_due DATE NULL, closed_at DATETIME NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, KEY org_id (org_id), KEY stage (pipeline, stage)",
   'activities' => "id INT AUTO_INCREMENT PRIMARY KEY, org_id INT NULL, contact_id INT NULL, deal_id INT NULL, chamber_id INT NULL, kind VARCHAR(20) NOT NULL DEFAULT 'note', body TEXT NOT NULL, who VARCHAR(190) NULL, created_at DATETIME NOT NULL, KEY org_id (org_id), KEY deal_id (deal_id), KEY chamber_id (chamber_id), KEY contact_id (contact_id)",
@@ -69,6 +69,11 @@ const DASH_TABLES = [
   'setup_steps' => "id INT AUTO_INCREMENT PRIMARY KEY, step_key VARCHAR(60) NOT NULL UNIQUE, phase VARCHAR(120) NOT NULL, phase_pos INT NOT NULL DEFAULT 0, position INT NOT NULL DEFAULT 0, title VARCHAR(190) NOT NULL, how TEXT NULL, where_at VARCHAR(255) NULL, only_if VARCHAR(190) NULL, archived TINYINT(1) NOT NULL DEFAULT 0, updated_at DATETIME NOT NULL, KEY ord (archived, phase_pos, position)",
   'setup_checks' => "id INT AUTO_INCREMENT PRIMARY KEY, chamber_id INT NOT NULL, step VARCHAR(60) NOT NULL, state VARCHAR(10) NOT NULL DEFAULT 'done', done_at DATETIME NOT NULL, UNIQUE KEY chamber_step (chamber_id, step)",
   'ask_log' => "id INT AUTO_INCREMENT PRIMARY KEY, question TEXT NOT NULL, answer MEDIUMTEXT NULL, doc_ids VARCHAR(255) NULL, ok TINYINT(1) NOT NULL DEFAULT 1, created_at DATETIME NOT NULL",
+];
+
+/** Columns added after a table was first created: table => [column => definition]. migrate() adds any that are missing. */
+const DASH_COLUMNS = [
+  'orgs' => ['phone' => 'VARCHAR(60) NULL AFTER website', 'email' => 'VARCHAR(190) NULL AFTER phone', 'source_url' => 'VARCHAR(255) NULL AFTER email'],
 ];
 
 /** Run migrate() once after each dashboard update, so new tables exist without a manual click. */
@@ -85,6 +90,19 @@ function migrate(): array {
       db()->exec("CREATE TABLE `$t` ($def) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
       $log[] = "Created $t";
     }
+  }
+  foreach (DASH_COLUMNS as $t => $cols) {
+    $have = array_column(db()->query("SHOW COLUMNS FROM `$t`")->fetchAll(), 'Field');
+    foreach ($cols as $c => $def) {
+      if (!in_array($c, $have, true)) {
+        db()->exec("ALTER TABLE `$t` ADD COLUMN `$c` $def");
+        $log[] = "Added $t.$c";
+      }
+    }
+  }
+  if (!db()->query("SHOW INDEX FROM orgs WHERE Key_name = 'state'")->fetchColumn()) {
+    db()->exec('ALTER TABLE orgs ADD KEY state (state)');
+    $log[] = 'Indexed orgs.state';
   }
   return $log;
 }
@@ -285,6 +303,7 @@ function hq_menu(): array {
     ['label' => 'Leads', 'on' => ['leads'], 'items' => [
       ['label' => 'Chamber pipeline', 'href' => 'index.php?p=leads&pipeline=chamber'],
       ['label' => 'Sponsor pipeline', 'href' => 'index.php?p=leads&pipeline=sponsor'],
+      ['label' => 'Import chambers (CSV)', 'href' => 'index.php?p=lead_import'],
     ]],
     ['label' => 'Contacts', 'on' => ['contacts'], 'items' => [
       ['label' => 'People', 'href' => 'index.php?p=contacts'],

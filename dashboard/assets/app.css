@@ -123,6 +123,7 @@ h2.section { margin: 0; font-size: 1.15rem; }
 .links { margin-top: .6rem; }
 .filters { margin-bottom: 1rem; }
 .filters input, .filters select { width: auto; flex: 1 1 180px; }
+.filters select { flex: 0 1 220px; }
 .filters button { flex: none; }
 .board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(220px, 1fr); gap: .7rem; overflow-x: auto; padding-bottom: .6rem; }
 .board .col { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: .7rem; min-height: 120px; align-self: start; }

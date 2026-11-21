@@ -28,7 +28,7 @@ const HQ_CHAMBER_STATUS = [
 const HQ_PIPELINES = [
   'chamber' => [
     'label' => 'Chambers',
-    'stages' => ['new' => 'New', 'contacted' => 'Contacted', 'demo_booked' => 'Demo booked', 'demo_done' => 'Demo done', 'proposal' => 'Proposal', 'sponsor_search' => 'Sponsor search', 'won' => 'Won', 'lost' => 'Lost'],
+    'stages' => ['prospect' => 'Prospect', 'new' => 'New', 'contacted' => 'Contacted', 'demo_booked' => 'Demo booked', 'demo_done' => 'Demo done', 'proposal' => 'Proposal', 'sponsor_search' => 'Sponsor search', 'won' => 'Won', 'lost' => 'Lost'],
   ],
   'sponsor' => [
     'label' => 'Sponsors',
