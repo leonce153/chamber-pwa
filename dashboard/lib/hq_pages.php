@@ -429,7 +429,8 @@ function hq_action(string $p, array $user): void {
         flash('Mailbox password removed. HQ sends with the web server again.');
         redirect('index.php?p=settings#email-sending');
       }
-      $pass = (string) ($_POST['smtp_pass'] ?? '');
+      // Trim spaces and line breaks that come along when a password is pasted.
+      $pass = trim((string) ($_POST['smtp_pass'] ?? ''));
       if ($pass !== '') set_setting('smtp_pass', seal($pass));
       $userName = strtolower(trim((string) ($_POST['smtp_user'] ?? '')));
       if ($userName !== '' && filter_var($userName, FILTER_VALIDATE_EMAIL)) set_setting('smtp_user', $userName);
