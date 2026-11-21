@@ -21,6 +21,14 @@ if (!$post && $p === 'mindmaps') {
   mindmaps_screen();
   exit;
 }
+if (in_array($p, ['lead_import', 'lead_import_template', 'lead_import_preview', 'lead_import_run', 'lead_import_cancel'], true)) {
+  require_once __DIR__ . '/import.php';
+  if ($post && $p !== 'lead_import' && $p !== 'lead_import_template') import_action($p);
+  elseif (!$post && $p === 'lead_import_template') import_template();
+  elseif (!$post && $p === 'lead_import') import_screen();
+  else redirect('index.php?p=lead_import');
+  exit;
+}
 if ($p === 'setup' || in_array($p, ['setup_mark', 'setup_step_save', 'setup_step_move', 'setup_step_delete', 'setup_phase_save'], true)) {
   require_once __DIR__ . '/setup.php';
   if ($post && $p !== 'setup') setup_action($p);
@@ -147,11 +155,12 @@ function hq_action(string $p, array $user): void {
         redirect(back('index.php?p=orgs'));
       }
       $vals = [$name, isset(HQ_ORG_KINDS[$_POST['kind'] ?? '']) ? $_POST['kind'] : 'prospect', post_str('town', 120), post_str('state', 40),
-        post_url('website'), post_int('member_count'), post_str('current_software', 120), post_str('notes', 10000)];
+        post_url('website'), post_str('phone', 60), filter_var(post_str('email', 190), FILTER_VALIDATE_EMAIL) ?: null, post_url('source_url'),
+        post_int('member_count'), post_str('current_software', 120), post_str('notes', 10000)];
       if ($id && row('orgs', $id)) {
-        db()->prepare('UPDATE orgs SET name=?, kind=?, town=?, state=?, website=?, member_count=?, current_software=?, notes=?, updated_at=? WHERE id=?')->execute([...$vals, now(), $id]);
+        db()->prepare('UPDATE orgs SET name=?, kind=?, town=?, state=?, website=?, phone=?, email=?, source_url=?, member_count=?, current_software=?, notes=?, updated_at=? WHERE id=?')->execute([...$vals, now(), $id]);
       } else {
-        db()->prepare('INSERT INTO orgs (name, kind, town, state, website, member_count, current_software, notes, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)')->execute([...$vals, now(), now()]);
+        db()->prepare('INSERT INTO orgs (name, kind, town, state, website, phone, email, source_url, member_count, current_software, notes, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)')->execute([...$vals, now(), now()]);
         $id = (int) db()->lastInsertId();
       }
       flash('Saved.');
@@ -629,52 +638,91 @@ function hq_screen(string $p, array $user): void {
       $pl = isset(HQ_PIPELINES[$_GET['pipeline'] ?? '']) ? $_GET['pipeline'] : 'chamber';
       $view = ($_GET['view'] ?? '') === 'list' ? 'list' : 'board';
       $showClosed = !empty($_GET['closed']);
-      $deals = rows("SELECT d.*, o.name AS org_name, c.name AS contact_name FROM deals d LEFT JOIN orgs o ON o.id = d.org_id LEFT JOIN contacts c ON c.id = d.contact_id
-        WHERE d.pipeline = ? " . ($showClosed ? '' : "AND (d.stage NOT IN ('won','lost') OR d.closed_at >= ?) ") . 'ORDER BY d.updated_at DESC', $showClosed ? [$pl] : [$pl, gmdate('Y-m-d H:i:s', time() - 30 * 86400)]);
+      require_once __DIR__ . '/import.php';
+      $state = us_state($_GET['state'] ?? null);
+      $stageF = isset(HQ_PIPELINES[$pl]['stages'][$_GET['stage'] ?? '']) ? (string) $_GET['stage'] : '';
+      $q = trim((string) ($_GET['q'] ?? ''));
+      $where = ['d.pipeline = ?'];
+      $args = [$pl];
+      if (!$showClosed) { $where[] = "(d.stage NOT IN ('won','lost') OR d.closed_at >= ?)"; $args[] = gmdate('Y-m-d H:i:s', time() - 30 * 86400); }
+      if ($state) { $sp = state_spellings($state); $where[] = 'o.state IN (' . implode(',', array_fill(0, count($sp), '?')) . ')'; array_push($args, ...$sp); }
+      if ($stageF) { $where[] = 'd.stage = ?'; $args[] = $stageF; }
+      if ($q !== '') { $where[] = '(d.title LIKE ? OR o.name LIKE ? OR o.town LIKE ?)'; array_push($args, "%$q%", "%$q%", "%$q%"); }
+      $deals = rows("SELECT d.*, o.name AS org_name, o.town AS org_town, o.state AS org_state, o.website AS org_website, o.phone AS org_phone, c.name AS contact_name
+        FROM deals d LEFT JOIN orgs o ON o.id = d.org_id LEFT JOIN contacts c ON c.id = d.contact_id
+        WHERE " . implode(' AND ', $where) . ' ORDER BY d.updated_at DESC', $args);
+      // States that have leads in this pipeline, for the filter
+      $stateCounts = [];
+      foreach (rows('SELECT o.state, COUNT(*) AS n FROM deals d JOIN orgs o ON o.id = d.org_id WHERE d.pipeline = ? AND o.state IS NOT NULL AND o.state <> \'\' GROUP BY o.state', [$pl]) as $r) {
+        $k = us_state($r['state']) ?? $r['state'];
+        $stateCounts[$k] = ($stateCounts[$k] ?? 0) + (int) $r['n'];
+      }
+      ksort($stateCounts);
       $stages = HQ_PIPELINES[$pl]['stages'];
+      $filters = array_filter(['state' => $state, 'stage' => $stageF, 'q' => $q]);
+      $here = 'index.php?p=leads&pipeline=' . $pl . '&view=' . $view . ($filters ? '&' . http_build_query($filters, '', '&', PHP_QUERY_RFC3986) : '');
+      $boardMax = 60;
       page_start('Leads', 'leads');
       ?>
       <div class="head">
         <h1>Leads</h1>
         <div class="row">
           <?php foreach (HQ_PIPELINES as $k => $def): ?><a class="btn small<?= $k === $pl ? ' primary' : '' ?>" href="index.php?p=leads&pipeline=<?= h($k) ?>&view=<?= h($view) ?>"><?= h($def['label']) ?></a><?php endforeach; ?>
-          <a class="btn small" href="index.php?p=leads&pipeline=<?= h($pl) ?>&view=<?= $view === 'board' ? 'list' : 'board' ?>"><?= $view === 'board' ? 'List view' : 'Board view' ?></a>
+          <a class="btn small" href="index.php?p=leads&pipeline=<?= h($pl) ?>&view=<?= $view === 'board' ? 'list' : 'board' ?><?= $filters ? '&' . h(http_build_query($filters, '', '&', PHP_QUERY_RFC3986)) : '' ?>"><?= $view === 'board' ? 'List view' : 'Board view' ?></a>
+          <?php if ($pl === 'chamber'): ?><a class="btn small" href="index.php?p=lead_import">Import CSV</a><?php endif; ?>
         </div>
       </div>
+      <form class="row filters" method="get"><input type="hidden" name="p" value="leads"><input type="hidden" name="pipeline" value="<?= h($pl) ?>"><input type="hidden" name="view" value="<?= h($view) ?>">
+        <select name="state" class="autosubmit" aria-label="State"><option value="">All states</option><?php foreach ($stateCounts as $sk => $sn): ?><option value="<?= h($sk) ?>"<?= $sk === $state ? ' selected' : '' ?>><?= h((US_STATES[$sk] ?? $sk) . " ($sn)") ?></option><?php endforeach; ?></select>
+        <select name="stage" class="autosubmit" aria-label="Stage"><option value="">All stages</option><?php foreach ($stages as $sk => $sl): ?><option value="<?= h($sk) ?>"<?= $sk === $stageF ? ' selected' : '' ?>><?= h($sl) ?></option><?php endforeach; ?></select>
+        <input name="q" value="<?= h($q) ?>" placeholder="Search name or town" aria-label="Search leads"><button class="small">Search</button>
+        <?php if ($filters): ?><a class="small" href="index.php?p=leads&pipeline=<?= h($pl) ?>&view=<?= h($view) ?>">Clear</a><?php endif; ?>
+        <span class="small muted"><?= count($deals) ?> <?= count($deals) === 1 ? 'lead' : 'leads' ?></span>
+      </form>
       <?php if ($view === 'board'): ?>
         <div class="board">
           <?php foreach ($stages as $sk => $sl):
-            $col = array_filter($deals, fn($d) => $d['stage'] === $sk); ?>
+            if ($stageF && $sk !== $stageF) continue;
+            $col = array_values(array_filter($deals, fn($d) => $d['stage'] === $sk));
+            if ($sk === 'prospect' && !$col && !$stageF) continue; ?>
             <section class="col">
               <h3><?= h($sl) ?> <span class="muted small"><?= count($col) ?></span></h3>
-              <?php foreach ($col as $d): ?>
+              <?php foreach (array_slice($col, 0, $boardMax) as $d): ?>
                 <article class="deal">
                   <a href="index.php?p=lead&id=<?= (int) $d['id'] ?>"><strong><?= h($d['title']) ?></strong></a>
+                  <?php if ($d['org_town'] || $d['org_state']): ?><div class="small muted"><?= h(trim(($d['org_town'] ?? '') . ', ' . ($d['org_state'] ?? ''), ', ')) ?></div><?php endif; ?>
                   <?php if ($d['contact_name']): ?><div class="small muted"><?= h($d['contact_name']) ?></div><?php endif; ?>
                   <div class="small"><?= $d['value_monthly'] ? money($d['value_monthly']) . '/mo · ' : '' ?><?= $d['next_step'] ? h($d['next_step']) . ' ' : '' ?><?= due_label($d['next_due']) ?></div>
-                  <form method="post" action="index.php?p=lead_stage" class="move"><?= csrf_field() ?><?= back_field("index.php?p=leads&pipeline=$pl") ?><input type="hidden" name="id" value="<?= (int) $d['id'] ?>">
+                  <form method="post" action="index.php?p=lead_stage" class="move"><?= csrf_field() ?><?= back_field($here) ?><input type="hidden" name="id" value="<?= (int) $d['id'] ?>">
                     <select name="stage" class="autosubmit" aria-label="Move to stage"><?php foreach ($stages as $k2 => $l2): ?><option value="<?= h($k2) ?>"<?= $k2 === $d['stage'] ? ' selected' : '' ?>><?= h($l2) ?></option><?php endforeach; ?></select>
                     <noscript><button class="small">Move</button></noscript>
                   </form>
                 </article>
               <?php endforeach; ?>
+              <?php if (count($col) > $boardMax): ?><p class="small"><a href="index.php?p=leads&pipeline=<?= h($pl) ?>&view=list&<?= h(http_build_query(['stage' => $sk] + $filters, '', '&', PHP_QUERY_RFC3986)) ?>"><?= count($col) - $boardMax ?> more in the list view</a></p><?php endif; ?>
             </section>
           <?php endforeach; ?>
         </div>
       <?php else: ?>
         <section class="card">
+          <?php if (!$deals): ?><p class="muted">No leads match.</p><?php else: ?>
           <table class="tbl">
-            <thead><tr><th>Lead</th><th>Stage</th><th>Contact</th><th>Monthly</th><th>Next step</th><th>Source</th><th>Updated</th></tr></thead>
+            <thead><tr><th>Lead</th><th>Stage</th><th>Town</th><th>Website</th><th>Phone</th><th>Contact</th><th>Next step</th><th>Source</th><th>Updated</th></tr></thead>
             <tbody>
             <?php foreach ($deals as $d): ?>
-              <tr><td><a href="index.php?p=lead&id=<?= (int) $d['id'] ?>"><?= h($d['title']) ?></a></td><td><?= h($stages[$d['stage']] ?? $d['stage']) ?></td><td><?= h($d['contact_name'] ?? '') ?></td>
-                <td><?= $d['value_monthly'] ? money($d['value_monthly']) : '' ?></td><td class="small"><?= h($d['next_step'] ?? '') ?> <?= due_label($d['next_due']) ?></td><td class="small"><?= h($d['source'] ?? '') ?></td><td class="small nowrap"><?= ago($d['updated_at']) ?></td></tr>
+              <tr><td><a href="index.php?p=lead&id=<?= (int) $d['id'] ?>"><?= h($d['title']) ?></a></td><td class="small"><?= h($stages[$d['stage']] ?? $d['stage']) ?></td>
+                <td class="small"><?= h(trim(($d['org_town'] ?? '') . ', ' . ($d['org_state'] ?? ''), ', ')) ?></td>
+                <td class="small"><?php if ($d['org_website']): ?><a href="<?= h($d['org_website']) ?>" target="_blank" rel="noopener"><?= h(preg_replace('#^https?://(www\.)?#', '', $d['org_website'])) ?></a><?php endif; ?></td>
+                <td class="small nowrap"><?= h($d['org_phone'] ?? '') ?></td>
+                <td class="small"><?= h($d['contact_name'] ?? '') ?></td>
+                <td class="small"><?= h($d['next_step'] ?? '') ?> <?= due_label($d['next_due']) ?><?= $d['value_monthly'] ? ' · ' . money($d['value_monthly']) . '/mo' : '' ?></td><td class="small"><?= h($d['source'] ?? '') ?></td><td class="small nowrap"><?= ago($d['updated_at']) ?></td></tr>
             <?php endforeach; ?>
             </tbody>
           </table>
+          <?php endif; ?>
         </section>
       <?php endif; ?>
-      <p class="small"><a href="index.php?p=leads&pipeline=<?= h($pl) ?>&view=<?= h($view) ?>&closed=<?= $showClosed ? '0' : '1' ?>"><?= $showClosed ? 'Hide' : 'Show' ?> won and lost leads older than 30 days</a></p>
+      <p class="small"><a href="<?= h($here) ?>&closed=<?= $showClosed ? '0' : '1' ?>"><?= $showClosed ? 'Hide' : 'Show' ?> won and lost leads older than 30 days</a></p>
       <section class="card" id="quick-add">
         <h2>Add a lead</h2>
         <form method="post" action="index.php?p=lead_quick" class="grid-form">
@@ -732,7 +780,13 @@ function hq_screen(string $p, array $user): void {
           <section class="card">
             <h2>Organization</h2>
             <?php if ($o): ?>
-              <p><a href="index.php?p=org&id=<?= (int) $o['id'] ?>"><strong><?= h($o['name']) ?></strong></a><br><span class="muted small"><?= h(HQ_ORG_KINDS[$o['kind']] ?? $o['kind']) ?><?= $o['town'] ? ' · ' . h($o['town']) : '' ?><?= $o['member_count'] ? ' · ' . (int) $o['member_count'] . ' members' : '' ?></span></p>
+              <p><a href="index.php?p=org&id=<?= (int) $o['id'] ?>"><strong><?= h($o['name']) ?></strong></a><br><span class="muted small"><?= h(HQ_ORG_KINDS[$o['kind']] ?? $o['kind']) ?><?= $o['town'] || $o['state'] ? ' · ' . h(trim(($o['town'] ?? '') . ', ' . ($o['state'] ?? ''), ', ')) : '' ?><?= $o['member_count'] ? ' · ' . (int) $o['member_count'] . ' members' : '' ?></span></p>
+              <?php if ($o['website'] || $o['phone'] || $o['email']): ?><p class="small">
+                <?php if ($o['website']): ?><a href="<?= h($o['website']) ?>" target="_blank" rel="noopener"><?= h(preg_replace('#^https?://(www\.)?#', '', $o['website'])) ?></a><br><?php endif; ?>
+                <?php if ($o['phone']): ?><?= h($o['phone']) ?><br><?php endif; ?>
+                <?php if ($o['email']): ?><a href="mailto:<?= h($o['email']) ?>"><?= h($o['email']) ?></a><?php endif; ?>
+              </p><?php endif; ?>
+              <?php if (!$o['website'] || !$o['phone'] || !$o['email']): ?><p class="small"><a href="index.php?p=org&id=<?= (int) $o['id'] ?>">Add <?= h(implode(', ', array_keys(array_filter(['website' => !$o['website'], 'phone' => !$o['phone'], 'email' => !$o['email']])))) ?></a></p><?php endif; ?>
             <?php else: ?><p class="muted">Not linked to an organization.</p><?php endif; ?>
             <h2>People</h2>
             <?php people_list($contacts); ?>
@@ -869,7 +923,10 @@ function hq_screen(string $p, array $user): void {
               <label>Kind <select name="kind"><?php foreach (HQ_ORG_KINDS as $k => $l): ?><option value="<?= h($k) ?>"<?= $k === ($o['kind'] ?? 'prospect') ? ' selected' : '' ?>><?= h($l) ?></option><?php endforeach; ?></select></label>
               <label>Town <input name="town" value="<?= h($o['town'] ?? '') ?>"></label>
               <label>State <input name="state" value="<?= h($o['state'] ?? '') ?>" maxlength="40"></label>
-              <label>Website <input name="website" value="<?= h($o['website'] ?? '') ?>"></label>
+              <label>Website <input name="website" value="<?= h($o['website'] ?? '') ?>"><?php if (!empty($o['website'])): ?> <a class="small" href="<?= h($o['website']) ?>" target="_blank" rel="noopener">Open</a><?php endif; ?></label>
+              <label>Phone <input name="phone" value="<?= h($o['phone'] ?? '') ?>"></label>
+              <label>Email <input name="email" type="email" value="<?= h($o['email'] ?? '') ?>"></label>
+              <label>Found at <input name="source_url" value="<?= h($o['source_url'] ?? '') ?>" placeholder="Where this chamber was listed"></label>
               <label>Members <input name="member_count" inputmode="numeric" value="<?= h($o['member_count'] ?? '') ?>"></label>
               <label class="full">Current software <input name="current_software" value="<?= h($o['current_software'] ?? '') ?>" placeholder="GrowthZone, ChamberMaster, MemberClicks, none…"></label>
               <label class="full">Notes <textarea name="notes" rows="3"><?= h($o['notes'] ?? '') ?></textarea></label>
@@ -947,7 +1004,7 @@ function hq_screen(string $p, array $user): void {
       <div class="cols wide-left">
         <section class="card">
           <h2>New announcement</h2>
-          <p class="muted small">Sent from info@chamberloop.com, one email per person, each with its own unsubscribe link. Contacts marked "do not email" are skipped.</p>
+          <p class="muted small">Sent from info@chamberloop.com, one email per person, each with its own unsubscribe link. Contacts marked "do not email" are skipped, and so are chambers still in the Prospect stage of the pipeline.</p>
           <form method="post" action="index.php?p=announce_post" class="stack">
             <?= csrf_field() ?>
             <label>Subject <input name="subject" maxlength="190" value="<?= h($d['subject']) ?>" required></label>

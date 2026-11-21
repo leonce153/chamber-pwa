@@ -25,6 +25,11 @@ const ANN_MAX = 250;
  */
 function ann_recipients(string $audience, array $chamberIds = []): array {
   $where = "c.email IS NOT NULL AND c.email <> '' AND c.do_not_email = 0";
+  // Chambers still in the Prospect stage (cold lists from a CSV import) never get bulk email.
+  // They join the audiences once their lead moves on to New, Contacted or later.
+  if ($audience !== 'pick') {
+    $where .= " AND (c.org_id IS NULL OR c.org_id NOT IN (SELECT org_id FROM deals WHERE pipeline = 'chamber' AND stage = 'prospect' AND org_id IS NOT NULL))";
+  }
   $args = [];
   switch ($audience) {
     case 'chambers':
