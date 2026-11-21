@@ -21,9 +21,9 @@ if (!$post && $p === 'mindmaps') {
   mindmaps_screen();
   exit;
 }
-if ($p === 'setup' || $p === 'setup_mark') {
+if ($p === 'setup' || in_array($p, ['setup_mark', 'setup_step_save', 'setup_step_move', 'setup_step_delete', 'setup_phase_save'], true)) {
   require_once __DIR__ . '/setup.php';
-  if ($post && $p === 'setup_mark') setup_action();
+  if ($post && $p !== 'setup') setup_action($p);
   elseif (!$post && $p === 'setup') setup_screen();
   else redirect('index.php?p=setup');
   exit;
