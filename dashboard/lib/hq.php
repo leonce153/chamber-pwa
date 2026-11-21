@@ -375,7 +375,7 @@ function notify_new_lead(int $dealId, array $in): void {
     $email = $clean($in['email'] ?? '');
     $headers = "From: Chamber Loop HQ <$from>\r\nContent-Type: text/plain; charset=UTF-8"
       . ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) ? "\r\nReply-To: $email" : '');
-    if (!@mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $body, $headers, '-f' . $from)) {
+    if (!hq_mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $body, $headers)) {
       error_log("New lead email for deal $dealId could not be sent");
     }
   } catch (Throwable $e) {

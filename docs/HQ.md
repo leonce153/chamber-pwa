@@ -125,14 +125,27 @@ as docs in the **Setup Manager** folder. The one-time importer was then removed.
 **Announcements** in the menu sends an email to a group of CRM contacts: chamber customers,
 prospect chambers, sponsors, everyone, or the contacts of the chambers you tick.
 
-- Sent from info@chamberloop.com (`mail_from` in config) with PHP `mail()`, one email per person,
-  HTML plus plain text. Up to 250 people per send because Hostinger limits outgoing mail per hour.
+- Sent from info@chamberloop.com, one email per person, HTML plus plain text, through the mailbox
+  (see Email sending below). Up to 250 people per send because Hostinger limits outgoing mail per hour.
 - Write the message in simple Markdown. "Save and preview" shows it; "Send a test to me" sends it
   only to your own login email.
 - Every email has a personal unsubscribe link (`unsubscribe.php`, signed with the config secret) and a
   `List-Unsubscribe` header. Clicking Unsubscribe marks the contact **do not email**, and HQ never
   sends announcements to those contacts.
 - Each send is kept in the history, and each person gets an "Announcement sent" note on their contact.
+
+## Email sending (SMTP)
+
+Settings → **Email sending** makes HQ send all its email (announcements, new-lead alerts, password
+resets) through the info@chamberloop.com mailbox at smtp.hostinger.com (port 465, SSL), signed in
+with the mailbox password. Mail sent that way carries the domain's DKIM signature and passes SPF, so
+it lands in inboxes instead of spam.
+
+- Paste the mailbox password and click **Save and send a test**. The password is stored encrypted
+  (sealed with the config secret) and is never shown again. A test email goes to your login email.
+- The card shows **On** when a password is saved, and the last test error if one failed.
+- **Remove password** turns it off. HQ then falls back to PHP `mail()`, which tends to land in spam.
+- Server and port are under "Server settings" (465 SSL or 587 STARTTLS) in case Hostinger changes them.
 
 ## Ask HQ
 

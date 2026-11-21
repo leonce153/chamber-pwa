@@ -74,14 +74,13 @@ if ($p === 'forgot') {
         set_setting('pwreset_' . (int) $u['id'], json_encode(['h' => hash('sha256', $token), 'exp' => time() + 1800]));
         $link = rtrim((string) cfg('base_url', 'https://dashboard.chamberloop.com'), '/') . '/index.php?p=reset&u=' . (int) $u['id'] . '&t=' . $token;
         $from = (string) cfg('mail_from', 'info@chamberloop.com');
-        $ok = @mail(
+        $ok = hq_mail(
           $u['email'],
           'Reset your Chamber Loop HQ password',
           "Someone asked to reset the password for Chamber Loop HQ (dashboard.chamberloop.com).\n\n"
           . "To choose a new password, open this link within 30 minutes:\n$link\n\n"
           . "If this wasn't you, ignore this email. Your password stays the same.\n",
-          "From: Chamber Loop HQ <$from>\r\nContent-Type: text/plain; charset=UTF-8",
-          '-f' . $from
+          "From: Chamber Loop HQ <$from>\r\nContent-Type: text/plain; charset=UTF-8"
         );
         if (!$ok) error_log('Password reset email could not be sent to user ' . (int) $u['id']);
       }
