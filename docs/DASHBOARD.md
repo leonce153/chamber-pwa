@@ -4,7 +4,7 @@
 chamber app from one login. Since version 1.1 it is **Chamber Loop HQ**: it also tracks every chamber
 on the Base44 platform, works as the CRM (leads, contacts, organizations, tasks), and holds the docs
 library with Ask HQ. Those parts are described in [HQ.md](HQ.md). The PWA screens below now live
-under **PWAs** in the top menu:
+under **PWAs** in the left sidebar:
 
 - **Apps**: each app's status, version, banner views/taps, pushes sent and last push.
 - **Open admin**: signs you straight into an app's `/admin` with a one-time link (good for 3 minutes).

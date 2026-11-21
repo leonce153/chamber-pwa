@@ -361,19 +361,17 @@
        {
         "label": "Pages",
         "path": "/site-admin/pages",
-        "desc": "Page builder: add pages and sections.",
-        "status": "super"
+        "desc": "Page builder: add pages and sections, header and footer menus, publish."
        },
        {
         "label": "Theme",
         "path": "/theme-designer",
-        "desc": "Colors, fonts and look of the site.",
-        "status": "super"
+        "desc": "Colors, fonts and look of the site."
        },
        {
         "label": "Website Templates",
         "path": "/website-templates",
-        "desc": "Start the site from a ready-made design.",
+        "desc": "Start the site from a ready-made design. Super admin only: applying one replaces the whole site.",
         "status": "super"
        }
       ]

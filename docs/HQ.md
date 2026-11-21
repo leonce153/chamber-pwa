@@ -6,6 +6,8 @@ Hostinger with no Base44 credits. It replaces the Base44 "ChamberLoop Setup Mana
 
 ## Screens
 
+Every screen is in the left sidebar (`hq_menu()` in `dashboard/lib/core.php`). A group opens to show its pages, and the group holding the page you are on starts open. On a phone the sidebar opens from the **Menu** button.
+
 | Menu | What it does |
 | --- | --- |
 | **Home** | Today: tasks and follow-ups due, new leads, chambers that need attention, monthly revenue. Chamber cards on top, PWA cards below. |
