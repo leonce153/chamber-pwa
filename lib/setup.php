@@ -1,19 +1,18 @@
 <?php
 /**
  * New chamber setup: the step-by-step checklist to follow after duplicating a chamber app.
- * The steps come from the integrations in the Super admin mind map (lib/mindmaps/super-admin.json).
- * Progress is kept per chamber in the setup_checks table. When a new integration or feature
- * needs setting up, add a step here and to the mind map.
+ * Steps live in the setup_steps table and are edited in HQ (New chamber setup → Edit steps).
+ * SETUP_DEFAULT_PHASES only fills that table the first time. Ticks are kept per chamber in
+ * setup_checks, by step_key, so a step's key never changes once made.
  */
 
 declare(strict_types=1);
 
 /**
- * Phases in order. Each step: [key, title, how, where, only_if].
- * key is stored in setup_checks, so never rename one; add a new key instead.
- * only_if is null for steps every chamber needs, or the condition under which it applies.
+ * The starting steps: phases in order, each step [key, title, how, where, only_if].
+ * Used once to fill setup_steps; edit steps in HQ, not here.
  */
-const SETUP_PHASES = [
+const SETUP_DEFAULT_PHASES = [
   ['Create the app', [
     ['duplicate', 'Duplicate the Core Template', 'Duplicate "ChamberLoop Core Template", not another chamber, so no members, emails or keys come along. Rename the copy to the chamber\'s name.', 'Base44 → ChamberLoop Core Template → Duplicate', null],
     ['hq_record', 'Add the chamber in HQ', 'Add it here with its plan, price, town and Base44 app id. Status stays Onboarding until launch.', 'HQ → Chambers → Add a chamber', null],
@@ -73,12 +72,42 @@ const SETUP_PHASES = [
   ]],
 ];
 
-/** All steps keyed by key, with their phase. */
+// ---------------------------------------------------------------------
+// Steps (stored in setup_steps; edited on the New chamber setup page)
+// ---------------------------------------------------------------------
+
+/** Fill setup_steps from SETUP_DEFAULT_PHASES the first time. */
+function setup_seed(): void {
+  if ((int) db()->query('SELECT COUNT(*) FROM setup_steps')->fetchColumn() > 0) return;
+  $ins = db()->prepare('INSERT INTO setup_steps (step_key, phase, phase_pos, position, title, how, where_at, only_if, archived, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)');
+  foreach (SETUP_DEFAULT_PHASES as $pi => [$phase, $steps]) {
+    foreach ($steps as $si => [$k, $title, $how, $where, $if]) {
+      $ins->execute([$k, $phase, ($pi + 1) * 10, ($si + 1) * 10, $title, $how, $where, $if, now()]);
+    }
+  }
+}
+
+/** Active steps in order. */
+function setup_step_rows(): array {
+  setup_seed();
+  return rows('SELECT * FROM setup_steps WHERE archived = 0 ORDER BY phase_pos, position, id');
+}
+
+/** [[phase name, [step rows]], ...] in order. */
+function setup_phases(): array {
+  $out = [];
+  foreach (setup_step_rows() as $r) {
+    $i = array_key_last($out);
+    if ($i === null || $out[$i][0] !== $r['phase']) $out[] = [$r['phase'], []];
+    $out[array_key_last($out)][1][] = $r;
+  }
+  return $out;
+}
+
+/** Active steps keyed by step_key. */
 function setup_steps(): array {
   $out = [];
-  foreach (SETUP_PHASES as [$phase, $steps]) {
-    foreach ($steps as [$k, $title, $how, $where, $if]) $out[$k] = compact('phase', 'title', 'how', 'where', 'if');
-  }
+  foreach (setup_step_rows() as $r) $out[$r['step_key']] = $r;
   return $out;
 }
 
@@ -89,33 +118,129 @@ function setup_checks(int $chamberId): array {
   return $out;
 }
 
-/** [done, total]: skipped steps count as done. */
+/** [done, total]: skipped steps count as done; removed steps don't count. */
 function setup_progress(int $chamberId): array {
   $steps = setup_steps();
-  $done = count(array_intersect_key(setup_checks($chamberId), $steps));
-  return [$done, count($steps)];
+  return [count(array_intersect_key(setup_checks($chamberId), $steps)), count($steps)];
 }
 
-function setup_action(): void {
-  $c = row('chambers', (int) ($_POST['id'] ?? 0));
-  $step = (string) ($_POST['step'] ?? '');
-  $state = (string) ($_POST['state'] ?? '');
-  $steps = setup_steps();
-  if (!$c || !isset($steps[$step])) {
-    flash('That step was not found.', 'err');
-    redirect('index.php?p=setup');
+// ---------------------------------------------------------------------
+// Actions
+// ---------------------------------------------------------------------
+
+function setup_action(string $p): void {
+  switch ($p) {
+    case 'setup_mark': {
+      $c = row('chambers', (int) ($_POST['id'] ?? 0));
+      $step = (string) ($_POST['step'] ?? '');
+      $state = (string) ($_POST['state'] ?? '');
+      if (!$c || !isset(setup_steps()[$step])) {
+        flash('That step was not found.', 'err');
+        redirect('index.php?p=setup');
+      }
+      db()->prepare('DELETE FROM setup_checks WHERE chamber_id = ? AND step = ?')->execute([$c['id'], $step]);
+      if ($state === 'done' || $state === 'skip') {
+        db()->prepare('INSERT INTO setup_checks (chamber_id, step, state, done_at) VALUES (?, ?, ?, ?)')->execute([$c['id'], $step, $state, now()]);
+      }
+      redirect('index.php?p=setup&id=' . (int) $c['id'] . '#step-' . $step);
+    }
+
+    case 'setup_step_save': {
+      $id = (int) ($_POST['step_id'] ?? 0);
+      $old = $id ? row('setup_steps', $id) : null;
+      $title = trim((string) ($_POST['title'] ?? ''));
+      $phase = trim((string) ($_POST['phase'] ?? ''));
+      if (($_POST['phase'] ?? '') === '__new') $phase = trim((string) ($_POST['new_phase'] ?? ''));
+      if ($title === '' || $phase === '') {
+        flash('A step needs a title and a phase.', 'err');
+        redirect('index.php?p=setup&edit=1' . ($id ? '&step=' . $id : '') . '#editor');
+      }
+      $fields = [mb_substr($title, 0, 190), trim((string) ($_POST['how'] ?? '')), mb_substr(trim((string) ($_POST['where_at'] ?? '')), 0, 255),
+        ($if = trim((string) ($_POST['only_if'] ?? ''))) === '' ? null : mb_substr($if, 0, 190)];
+      // Where it goes: the phase's place, or a new phase at the end; a new or moved step goes last in its phase.
+      $pp = db()->prepare('SELECT MIN(phase_pos) FROM setup_steps WHERE archived = 0 AND phase = ?');
+      $pp->execute([$phase]);
+      $phasePos = $pp->fetchColumn();
+      if ($phasePos === null || $phasePos === false) $phasePos = (int) db()->query('SELECT COALESCE(MAX(phase_pos), 0) FROM setup_steps')->fetchColumn() + 10;
+      $needsPlace = !$old || $old['phase'] !== $phase;
+      $mx = db()->prepare('SELECT COALESCE(MAX(position), 0) FROM setup_steps WHERE archived = 0 AND phase = ?');
+      $mx->execute([$phase]);
+      $position = $needsPlace ? (int) $mx->fetchColumn() + 10 : (int) $old['position'];
+      if ($old) {
+        db()->prepare('UPDATE setup_steps SET title = ?, how = ?, where_at = ?, only_if = ?, phase = ?, phase_pos = ?, position = ?, updated_at = ? WHERE id = ?')
+          ->execute([...$fields, $phase, (int) $phasePos, $position, now(), $id]);
+        flash('Step saved.');
+      } else {
+        $key = 'c' . bin2hex(random_bytes(5));
+        db()->prepare('INSERT INTO setup_steps (step_key, phase, phase_pos, position, title, how, where_at, only_if, archived, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)')
+          ->execute([$key, $phase, (int) $phasePos, $position, ...$fields, now()]);
+        $id = (int) db()->lastInsertId();
+        flash('Step added.');
+      }
+      redirect('index.php?p=setup&edit=1#s' . $id);
+    }
+
+    case 'setup_step_move': {
+      $r = row('setup_steps', (int) ($_POST['step_id'] ?? 0));
+      if ($r) {
+        $up = ($_POST['dir'] ?? '') === 'up';
+        $sib = rows('SELECT * FROM setup_steps WHERE archived = 0 AND phase = ? AND id <> ? AND ' . ($up ? 'position <= ? ORDER BY position DESC, id DESC' : 'position >= ? ORDER BY position, id') . ' LIMIT 1',
+          [$r['phase'], $r['id'], $r['position']]);
+        if ($sib) {
+          $a = (int) $r['position']; $b = (int) $sib[0]['position'];
+          if ($a === $b) $b = $up ? $a - 1 : $a + 1;
+          db()->prepare('UPDATE setup_steps SET position = ? WHERE id = ?')->execute([$b, $r['id']]);
+          db()->prepare('UPDATE setup_steps SET position = ? WHERE id = ?')->execute([$a, $sib[0]['id']]);
+        }
+      }
+      redirect('index.php?p=setup&edit=1#s' . (int) ($r['id'] ?? 0));
+    }
+
+    case 'setup_step_delete': {
+      $r = row('setup_steps', (int) ($_POST['step_id'] ?? 0));
+      if ($r) {
+        db()->prepare('UPDATE setup_steps SET archived = 1, updated_at = ? WHERE id = ?')->execute([now(), $r['id']]);
+        flash('Removed "' . $r['title'] . '". Chambers no longer count it.');
+      }
+      redirect('index.php?p=setup&edit=1');
+    }
+
+    case 'setup_phase_save': {
+      $old = (string) ($_POST['old'] ?? '');
+      $new = mb_substr(trim((string) ($_POST['name'] ?? '')), 0, 120);
+      $dir = (string) ($_POST['dir'] ?? '');
+      if ($dir === 'up' || $dir === 'down') {
+        $names = array_column(setup_phases(), 0);
+        $i = array_search($old, $names, true);
+        $j = $i === false ? null : ($dir === 'up' ? $i - 1 : $i + 1);
+        if ($j !== null && isset($names[$j])) {
+          // Renumber all phases in the new order.
+          [$names[$i], $names[$j]] = [$names[$j], $names[$i]];
+          $st = db()->prepare('UPDATE setup_steps SET phase_pos = ? WHERE phase = ?');
+          foreach ($names as $n => $name) $st->execute([($n + 1) * 10, $name]);
+        }
+        redirect('index.php?p=setup&edit=1#phase-' . md5($old));
+      }
+      if ($new !== '' && $old !== '') {
+        db()->prepare('UPDATE setup_steps SET phase = ? WHERE phase = ?')->execute([$new, $old]);
+        flash('Phase renamed.');
+      }
+      redirect('index.php?p=setup&edit=1#phase-' . md5($new ?: $old));
+    }
   }
-  db()->prepare('DELETE FROM setup_checks WHERE chamber_id = ? AND step = ?')->execute([$c['id'], $step]);
-  if ($state === 'done' || $state === 'skip') {
-    db()->prepare('INSERT INTO setup_checks (chamber_id, step, state, done_at) VALUES (?, ?, ?, ?)')->execute([$c['id'], $step, $state, now()]);
-  }
-  redirect('index.php?p=setup&id=' . (int) $c['id'] . '#step-' . $step);
+  redirect('index.php?p=setup');
 }
+
+// ---------------------------------------------------------------------
+// Screens
+// ---------------------------------------------------------------------
 
 function setup_screen(): void {
   $c = !empty($_GET['id']) ? row('chambers', (int) $_GET['id']) : null;
+  $edit = !$c && !empty($_GET['edit']);
   page_start($c ? 'Setup · ' . $c['name'] : 'New chamber setup', 'setup');
   if ($c) setup_chamber($c);
+  elseif ($edit) setup_editor();
   else setup_overview();
   page_end();
 }
@@ -128,7 +253,10 @@ function setup_overview(): void {
       <h1>New chamber setup</h1>
       <p class="muted">Follow these steps after duplicating a chamber app so nothing gets left out. Pick a chamber to tick steps off as you go.</p>
     </div>
-    <a class="btn" href="index.php?p=mindmaps&m=super-admin">Super admin map</a>
+    <div class="row">
+      <a class="btn primary" href="index.php?p=setup&edit=1">Edit steps</a>
+      <a class="btn" href="index.php?p=mindmaps&m=super-admin">Super admin map</a>
+    </div>
   </div>
   <section class="card">
     <h2>Chambers</h2>
@@ -143,25 +271,119 @@ function setup_overview(): void {
       </ul>
     <?php endif; ?>
   </section>
-  <?php foreach (SETUP_PHASES as $i => [$phase, $steps]): ?>
+  <?php foreach (setup_phases() as $i => [$phase, $steps]): ?>
     <section class="card setup-phase">
       <h2><?= $i + 1 ?>. <?= h($phase) ?></h2>
       <ol class="setup-steps">
-        <?php foreach ($steps as [$k, $title, $how, $where, $if]): ?>
-          <li><?php setup_step_text($title, $how, $where, $if); ?></li>
+        <?php foreach ($steps as $s): ?>
+          <li><?php setup_step_text($s); ?></li>
         <?php endforeach; ?>
       </ol>
     </section>
   <?php endforeach;
 }
 
-function setup_step_text(string $title, string $how, string $where, ?string $if): void {
+function setup_step_text(array $s): void {
   ?>
   <div class="setup-text">
-    <strong><?= h($title) ?></strong><?php if ($if): ?> <span class="badge blue">Only if <?= h($if) ?></span><?php endif; ?>
-    <p class="small"><?= h($how) ?></p>
-    <p class="small muted">Where: <?= h($where) ?></p>
+    <strong><?= h($s['title']) ?></strong><?php if ($s['only_if']): ?> <span class="badge blue">Only if <?= h($s['only_if']) ?></span><?php endif; ?>
+    <?php if ($s['how'] !== ''): ?><p class="small"><?= nl2br(h($s['how'])) ?></p><?php endif; ?>
+    <?php if ($s['where_at']): ?><p class="small muted">Where: <?= h($s['where_at']) ?></p><?php endif; ?>
   </div>
+  <?php
+}
+
+/** The edit form for one step; $s is null for a new step. */
+function setup_step_form(?array $s, array $phaseNames, string $phase = ''): void {
+  $phase = $s['phase'] ?? $phase;
+  ?>
+  <form method="post" action="index.php?p=setup_step_save" class="stack setup-form"><?= csrf_field() ?>
+    <?php if ($s): ?><input type="hidden" name="step_id" value="<?= (int) $s['id'] ?>"><?php endif; ?>
+    <label>Step <input name="title" value="<?= h($s['title'] ?? '') ?>" required maxlength="190"></label>
+    <label>What to do <textarea name="how" rows="3"><?= h($s['how'] ?? '') ?></textarea></label>
+    <label>Where <input name="where_at" value="<?= h($s['where_at'] ?? '') ?>" maxlength="255" placeholder="Chamber app → Settings → …"></label>
+    <label>Only if <span class="muted small">(leave empty when every chamber needs it)</span><input name="only_if" value="<?= h($s['only_if'] ?? '') ?>" maxlength="190" placeholder="the chamber takes payments online"></label>
+    <label>Phase
+      <select name="phase" data-newphase>
+        <?php foreach ($phaseNames as $n): ?><option value="<?= h($n) ?>"<?= $n === $phase ? ' selected' : '' ?>><?= h($n) ?></option><?php endforeach; ?>
+        <option value="__new"<?= $phase === '__new' ? ' selected' : '' ?>>New phase…</option>
+      </select>
+    </label>
+    <label class="setup-newphase">New phase name <input name="new_phase" maxlength="120"></label>
+    <div class="row">
+      <button class="primary"><?= $s ? 'Save step' : 'Add step' ?></button>
+      <a class="btn" href="index.php?p=setup&edit=1<?= $s ? '#s' . (int) $s['id'] : '' ?>">Cancel</a>
+    </div>
+  </form>
+  <?php
+}
+
+function setup_editor(): void {
+  $phases = setup_phases();
+  $names = array_column($phases, 0);
+  $editId = (int) ($_GET['step'] ?? 0);
+  $addTo = (string) ($_GET['add'] ?? '');
+  ?>
+  <p class="crumbs"><a href="index.php?p=setup">← New chamber setup</a></p>
+  <div class="head">
+    <div>
+      <h1>Edit setup steps</h1>
+      <p class="muted">Changes apply to every chamber's checklist. Ticks already made stay with their step; a removed step stops counting.</p>
+    </div>
+    <a class="btn primary" href="index.php?p=setup">Done editing</a>
+  </div>
+  <?php foreach ($phases as $i => [$phase, $steps]): $anchor = 'phase-' . md5($phase); ?>
+    <section class="card setup-phase" id="<?= h($anchor) ?>">
+      <div class="setup-phase-head">
+        <form method="post" action="index.php?p=setup_phase_save" class="row setup-phase-name"><?= csrf_field() ?>
+          <input type="hidden" name="old" value="<?= h($phase) ?>">
+          <span class="setup-num"><?= $i + 1 ?>.</span>
+          <input name="name" value="<?= h($phase) ?>" aria-label="Phase name" maxlength="120">
+          <button class="small">Rename</button>
+          <button class="small" name="dir" value="up" aria-label="Move phase up"<?= $i === 0 ? ' disabled' : '' ?>>↑</button>
+          <button class="small" name="dir" value="down" aria-label="Move phase down"<?= $i === count($phases) - 1 ? ' disabled' : '' ?>>↓</button>
+        </form>
+      </div>
+      <ol class="setup-steps">
+        <?php foreach ($steps as $n => $s): ?>
+          <li id="s<?= (int) $s['id'] ?>">
+            <?php if ($editId === (int) $s['id']): ?>
+              <div class="setup-text" id="editor"><?php setup_step_form($s, $names); ?></div>
+            <?php else: ?>
+              <?php setup_step_text($s); ?>
+              <div class="setup-side small">
+                <a class="btn small" href="index.php?p=setup&edit=1&step=<?= (int) $s['id'] ?>#s<?= (int) $s['id'] ?>">Edit</a>
+                <form method="post" action="index.php?p=setup_step_move" class="row"><?= csrf_field() ?>
+                  <input type="hidden" name="step_id" value="<?= (int) $s['id'] ?>">
+                  <button class="small" name="dir" value="up" aria-label="Move up: <?= h($s['title']) ?>"<?= $n === 0 ? ' disabled' : '' ?>>↑</button>
+                  <button class="small" name="dir" value="down" aria-label="Move down: <?= h($s['title']) ?>"<?= $n === count($steps) - 1 ? ' disabled' : '' ?>>↓</button>
+                </form>
+                <form method="post" action="index.php?p=setup_step_delete" class="confirm" data-confirm="Remove this step from every chamber's checklist?"><?= csrf_field() ?>
+                  <input type="hidden" name="step_id" value="<?= (int) $s['id'] ?>">
+                  <button class="small link">Remove</button>
+                </form>
+              </div>
+            <?php endif; ?>
+          </li>
+        <?php endforeach; ?>
+        <li>
+          <?php if ($addTo === $phase): ?>
+            <div class="setup-text" id="editor"><?php setup_step_form(null, $names, $phase); ?></div>
+          <?php else: ?>
+            <a class="small" href="index.php?p=setup&edit=1&add=<?= h(rawurlencode($phase)) ?>#editor">+ Add a step to <?= h($phase) ?></a>
+          <?php endif; ?>
+        </li>
+      </ol>
+    </section>
+  <?php endforeach; ?>
+  <section class="card">
+    <h2>Add a new phase</h2>
+    <?php if ($addTo === '__new'): ?>
+      <div id="editor"><?php setup_step_form(null, $names, '__new'); ?></div>
+    <?php else: ?>
+      <p class="small"><a href="index.php?p=setup&edit=1&add=__new#editor">+ Start a new phase with its first step</a></p>
+    <?php endif; ?>
+  </section>
   <?php
 }
 
@@ -176,23 +398,24 @@ function setup_chamber(array $c): void {
       <p class="muted"><?= $done ?> of <?= $total ?> steps done<?= $done === $total ? '. Everything is set up.' : '' ?></p>
     </div>
     <div class="row links">
+      <a class="btn" href="index.php?p=setup&edit=1">Edit steps</a>
       <?php if ($c['admin_url']): ?><a class="btn" href="<?= h($c['admin_url']) ?>" target="_blank" rel="noopener">Open admin ↗</a><?php endif; ?>
       <?php if ($b = base44_editor_url($c['base44_app_id'])): ?><a class="btn" href="<?= h($b) ?>" target="_blank" rel="noopener">Base44 editor ↗</a><?php endif; ?>
     </div>
   </div>
   <progress class="setup-bar" max="<?= $total ?>" value="<?= $done ?>"></progress>
-  <?php foreach (SETUP_PHASES as $i => [$phase, $steps]):
-    $pd = count(array_intersect_key($checks, array_flip(array_column($steps, 0)))); ?>
+  <?php foreach (setup_phases() as $i => [$phase, $steps]):
+    $pd = count(array_intersect_key($checks, array_flip(array_column($steps, 'step_key')))); ?>
     <section class="card setup-phase">
       <h2><?= $i + 1 ?>. <?= h($phase) ?> <span class="small muted"><?= $pd ?> of <?= count($steps) ?></span></h2>
       <ol class="setup-steps">
-        <?php foreach ($steps as [$k, $title, $how, $where, $if]): $st = $checks[$k]['state'] ?? ''; ?>
+        <?php foreach ($steps as $s): $k = $s['step_key']; $st = $checks[$k]['state'] ?? ''; ?>
           <li id="step-<?= h($k) ?>" class="<?= $st ? 'is-' . h($st) : '' ?>">
             <form method="post" action="index.php?p=setup_mark" class="setup-tick"><?= csrf_field() ?>
               <input type="hidden" name="id" value="<?= (int) $c['id'] ?>"><input type="hidden" name="step" value="<?= h($k) ?>">
-              <button name="state" value="<?= $st === 'done' ? '' : 'done' ?>" class="tick" aria-label="<?= $st === 'done' ? 'Mark not done' : 'Mark done' ?>: <?= h($title) ?>"><?= $st === 'done' ? '✓' : '' ?></button>
+              <button name="state" value="<?= $st === 'done' ? '' : 'done' ?>" class="tick" aria-label="<?= $st === 'done' ? 'Mark not done' : 'Mark done' ?>: <?= h($s['title']) ?>"><?= $st === 'done' ? '✓' : '' ?></button>
             </form>
-            <?php setup_step_text($title, $how, $where, $if); ?>
+            <?php setup_step_text($s); ?>
             <div class="setup-side small">
               <?php if ($st): ?>
                 <span class="muted"><?= $st === 'skip' ? 'Not needed' : 'Done' ?> <?= h(date('M j', strtotime($checks[$k]['done_at'] . ' UTC'))) ?></span>

@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 define('DASH_ROOT', dirname(__DIR__));
 define('DASH_CONFIG', DASH_ROOT . '/data/config.php');
-define('DASH_VERSION', '1.3.0');
+define('DASH_VERSION', '1.4.0');
 
 date_default_timezone_set('UTC');
 
@@ -66,6 +66,7 @@ const DASH_TABLES = [
   'tasks' => "id INT AUTO_INCREMENT PRIMARY KEY, title VARCHAR(255) NOT NULL, due_date DATE NULL, done_at DATETIME NULL, org_id INT NULL, deal_id INT NULL, chamber_id INT NULL, contact_id INT NULL, created_at DATETIME NOT NULL, KEY open_due (done_at, due_date)",
   'docs' => "id INT AUTO_INCREMENT PRIMARY KEY, folder VARCHAR(80) NOT NULL DEFAULT 'General', title VARCHAR(190) NOT NULL, body MEDIUMTEXT NOT NULL, tags VARCHAR(255) NULL, last_checked DATE NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, KEY folder (folder), FULLTEXT KEY ft (title, body, tags)",
   'announcements' => "id INT AUTO_INCREMENT PRIMARY KEY, subject VARCHAR(190) NOT NULL, body MEDIUMTEXT NOT NULL, audience VARCHAR(40) NOT NULL, audience_label VARCHAR(255) NULL, recipients INT NOT NULL DEFAULT 0, sent INT NOT NULL DEFAULT 0, failed INT NOT NULL DEFAULT 0, who VARCHAR(190) NULL, sent_at DATETIME NOT NULL",
+  'setup_steps' => "id INT AUTO_INCREMENT PRIMARY KEY, step_key VARCHAR(60) NOT NULL UNIQUE, phase VARCHAR(120) NOT NULL, phase_pos INT NOT NULL DEFAULT 0, position INT NOT NULL DEFAULT 0, title VARCHAR(190) NOT NULL, how TEXT NULL, where_at VARCHAR(255) NULL, only_if VARCHAR(190) NULL, archived TINYINT(1) NOT NULL DEFAULT 0, updated_at DATETIME NOT NULL, KEY ord (archived, phase_pos, position)",
   'setup_checks' => "id INT AUTO_INCREMENT PRIMARY KEY, chamber_id INT NOT NULL, step VARCHAR(60) NOT NULL, state VARCHAR(10) NOT NULL DEFAULT 'done', done_at DATETIME NOT NULL, UNIQUE KEY chamber_step (chamber_id, step)",
   'ask_log' => "id INT AUTO_INCREMENT PRIMARY KEY, question TEXT NOT NULL, answer MEDIUMTEXT NULL, doc_ids VARCHAR(255) NULL, ok TINYINT(1) NOT NULL DEFAULT 1, created_at DATETIME NOT NULL",
 ];

@@ -231,3 +231,10 @@ main:has(.mm-shell) { max-width: none; }
 .setup-steps li.is-done .setup-text strong { text-decoration: line-through; color: var(--muted); }
 .setup-steps li.is-skip { opacity: .55; }
 .setup-steps li.is-skip .tick { visibility: hidden; }
+.setup-side .row { gap: .25rem; }
+.setup-form { width: 100%; max-width: 640px; }
+.setup-form:not(:has(option[value="__new"]:checked)) .setup-newphase { display: none; }
+.setup-phase-name { gap: .4rem; align-items: center; flex-wrap: nowrap; }
+.setup-phase-name input[name="name"] { font-weight: 700; font-size: 1.05rem; max-width: 22rem; }
+.setup-num { font-weight: 700; font-size: 1.05rem; }
+.setup-phase-head { margin-bottom: .4rem; }
