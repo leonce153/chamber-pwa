@@ -252,28 +252,74 @@ function ago(?string $ts): string {
   return gmdate('M j, Y', $t);
 }
 
+/**
+ * The left sidebar. A group opens to show its pages; the group holding the current page starts open.
+ * 'on' lists the page_start() $active keys that belong to an item, so detail pages light up their list.
+ */
+function hq_menu(): array {
+  $maps = [];
+  foreach (['chamber-managers' => 'Chamber managers', 'business-owners' => 'Business owners', 'super-admin' => 'Super admin'] as $k => $l) {
+    $maps[] = ['label' => $l, 'href' => 'index.php?p=mindmaps&m=' . $k];
+  }
+  return [
+    ['label' => 'Home', 'href' => 'index.php', 'on' => ['home']],
+    ['heading' => 'Platform'],
+    ['label' => 'Chambers', 'on' => ['chambers'], 'items' => [
+      ['label' => 'All chambers', 'href' => 'index.php?p=chambers'],
+      ['label' => 'Live', 'href' => 'index.php?p=chambers&status=live'],
+      ['label' => 'Onboarding', 'href' => 'index.php?p=chambers&status=onboarding'],
+      ['label' => 'Grace', 'href' => 'index.php?p=chambers&status=grace'],
+      ['label' => 'Add a chamber', 'href' => 'index.php?p=chamber_new'],
+    ]],
+    ['label' => 'PWAs', 'on' => ['pwas', 'updates', 'push', 'template', 'activity'], 'items' => [
+      ['label' => 'Apps', 'href' => 'index.php?p=pwas', 'on' => ['pwas']],
+      ['label' => 'Updates', 'href' => 'index.php?p=updates', 'on' => ['updates']],
+      ['label' => 'Notifications', 'href' => 'index.php?p=push', 'on' => ['push']],
+      ['label' => 'Template', 'href' => 'index.php?p=template', 'on' => ['template']],
+      ['label' => 'Activity', 'href' => 'index.php?p=activity', 'on' => ['activity']],
+    ]],
+    ['heading' => 'Sales and contacts'],
+    ['label' => 'Leads', 'on' => ['leads'], 'items' => [
+      ['label' => 'Chamber pipeline', 'href' => 'index.php?p=leads&pipeline=chamber'],
+      ['label' => 'Sponsor pipeline', 'href' => 'index.php?p=leads&pipeline=sponsor'],
+    ]],
+    ['label' => 'Contacts', 'on' => ['contacts'], 'items' => [
+      ['label' => 'People', 'href' => 'index.php?p=contacts'],
+      ['label' => 'Organizations', 'href' => 'index.php?p=orgs'],
+    ]],
+    ['label' => 'Tasks', 'href' => 'index.php?p=tasks', 'on' => ['tasks']],
+    ['label' => 'Announcements', 'href' => 'index.php?p=announce', 'on' => ['announce']],
+    ['heading' => 'Knowledge'],
+    ['label' => 'Docs', 'on' => ['docs', 'ask'], 'items' => [
+      ['label' => 'Docs library', 'href' => 'index.php?p=docs', 'on' => ['docs']],
+      ['label' => 'Ask HQ', 'href' => 'index.php?p=ask', 'on' => ['ask']],
+      ['label' => 'New doc', 'href' => 'index.php?p=doc_edit'],
+    ]],
+    ['label' => 'Mind maps', 'on' => ['mindmaps'], 'items' => $maps],
+    ['heading' => ''],
+    ['label' => 'Settings', 'href' => 'index.php?p=settings', 'on' => ['settings']],
+  ];
+}
+
+/** Whether a menu link is the page being shown: same ?p= and every other parameter in the link matches. */
+function hq_menu_current(string $href): bool {
+  parse_str((string) parse_url($href, PHP_URL_QUERY), $q);
+  $cur = $_GET + ['p' => 'home'];
+  $q += ['p' => 'home'];
+  foreach ($q as $k => $v) {
+    if ((string) ($cur[$k] ?? '') !== (string) $v) return false;
+  }
+  // A plain list link (no filters) is not current when the page has a filter or id on it.
+  foreach (['status', 'pipeline', 'm', 'id', 'kind', 'folder'] as $k) {
+    if (!isset($q[$k]) && isset($cur[$k]) && $cur[$k] !== '') return false;
+  }
+  return true;
+}
+
 function page_start(string $title, string $active = ''): void {
   $u = current_user();
   header('Content-Type: text/html; charset=utf-8');
   header("Content-Security-Policy: default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'; form-action 'self' https:");
-  $nav = [
-    'home' => ['index.php', 'Home'],
-    'chambers' => ['index.php?p=chambers', 'Chambers'],
-    'pwas' => ['index.php?p=pwas', 'PWAs'],
-    'leads' => ['index.php?p=leads', 'Leads'],
-    'contacts' => ['index.php?p=contacts', 'Contacts'],
-    'announce' => ['index.php?p=announce', 'Announcements'],
-    'tasks' => ['index.php?p=tasks', 'Tasks'],
-    'docs' => ['index.php?p=docs', 'Docs'],
-    'ask' => ['index.php?p=ask', 'Ask HQ'],
-    'mindmaps' => ['index.php?p=mindmaps', 'Mind maps'],
-    'activity' => ['index.php?p=activity', 'Activity'],
-    'settings' => ['index.php?p=settings', 'Settings'],
-  ];
-  // The PWA screens share one menu item and show their own sub-menu
-  $pwaTabs = ['pwas' => 'Apps', 'updates' => 'Updates', 'push' => 'Notifications', 'template' => 'Template'];
-  $sub = isset($pwaTabs[$active]) ? $active : null;
-  if ($sub) $active = 'pwas';
   ?><!doctype html>
 <html lang="en">
 <head>
@@ -285,27 +331,45 @@ function page_start(string $title, string $active = ''): void {
 <link rel="stylesheet" href="assets/app.css?v=<?= DASH_VERSION . '-' . @filemtime(DASH_ROOT . '/assets/app.css') ?>">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231f5f4a'/><path d='M8 22V10h4v12zm6 0V6h4v16zm6 0v-8h4v8z' fill='white'/></svg>">
 </head>
-<body>
+<body class="<?= $u ? 'has-side' : 'no-side' ?>">
 <header class="top">
   <a class="brand" href="index.php"><span class="logo" aria-hidden="true"></span>Chamber Loop HQ</a>
-  <?php if ($u): ?>
-  <button class="menu-btn" type="button" aria-controls="nav" aria-expanded="false">Menu</button>
-  <nav id="nav">
-    <?php foreach ($nav as $k => [$href, $label]): ?>
-      <a href="<?= h($href) ?>"<?= $k === $active ? ' class="on" aria-current="page"' : '' ?>><?= h($label) ?></a>
-    <?php endforeach; ?>
-    <form method="post" action="index.php?p=logout" class="inline"><?= csrf_field() ?><button class="link">Sign out</button></form>
-  </nav>
-  <?php endif; ?>
+  <?php if ($u): ?><button class="menu-btn" type="button" aria-controls="nav" aria-expanded="false">Menu</button><?php endif; ?>
 </header>
-<main>
-<?php if ($u && $sub): ?>
-  <nav class="subnav" aria-label="PWA screens">
-    <?php foreach ($pwaTabs as $k => $label): ?>
-      <a href="index.php?p=<?= h($k) ?>"<?= $k === $sub ? ' class="on" aria-current="page"' : '' ?>><?= h($label) ?></a>
-    <?php endforeach; ?>
+<?php if ($u): ?>
+<aside class="side" id="nav" aria-label="Main menu">
+  <a class="brand" href="index.php"><span class="logo" aria-hidden="true"></span>Chamber Loop HQ</a>
+  <nav class="side-nav">
+    <?php foreach (hq_menu() as $it):
+      if (isset($it['heading'])): ?>
+        <p class="side-head"><?= h($it['heading']) ?></p>
+      <?php continue; endif;
+      $inGroup = in_array($active, $it['on'] ?? [], true);
+      if (empty($it['items'])):
+        $on = $inGroup || hq_menu_current($it['href']); ?>
+        <a class="side-link<?= $on ? ' on' : '' ?>" href="<?= h($it['href']) ?>"<?= $on ? ' aria-current="page"' : '' ?>><?= h($it['label']) ?></a>
+      <?php else: ?>
+        <details class="side-group"<?= $inGroup ? ' open' : '' ?>>
+          <summary class="side-link<?= $inGroup ? ' in' : '' ?>"><?= h($it['label']) ?></summary>
+          <?php
+            // Highlight the exact link; failing that, the item whose 'on' keys hold this page; failing that, the first.
+            $hit = null;
+            foreach ($it['items'] as $i => $sub) if ($hit === null && hq_menu_current($sub['href'])) $hit = $i;
+            if ($hit === null && $inGroup) foreach ($it['items'] as $i => $sub) if ($hit === null && in_array($active, $sub['on'] ?? [], true)) $hit = $i;
+            if ($hit === null && $inGroup && !isset($it['items'][0]['on'])) $hit = 0;
+          ?>
+          <div class="side-sub">
+            <?php foreach ($it['items'] as $i => $sub): ?>
+              <a href="<?= h($sub['href']) ?>"<?= $i === $hit ? ' class="on" aria-current="page"' : '' ?>><?= h($sub['label']) ?></a>
+            <?php endforeach; ?>
+          </div>
+        </details>
+      <?php endif; endforeach; ?>
   </nav>
+  <form method="post" action="index.php?p=logout" class="side-foot"><?= csrf_field() ?><span class="small muted"><?= h($u['email'] ?? '') ?></span><button class="link small">Sign out</button></form>
+</aside>
 <?php endif; ?>
+<main>
 <?php foreach (take_flash() as [$kind, $msg]): ?>
   <div class="flash <?= h($kind) ?>"><?= h($msg) ?></div>
 <?php endforeach;

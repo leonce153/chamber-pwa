@@ -29,27 +29,6 @@ function mindmaps_screen(): void {
   page_start('Mind maps · ' . $label, 'mindmaps');
   ?>
   <div class="mm-shell">
-    <aside class="mm-side" aria-label="Mind maps">
-      <p class="mm-side-head">Mind maps</p>
-      <ul>
-        <?php foreach (MINDMAPS as $k => [$l, $b]): $has = mindmap_load($k) !== null; ?>
-          <li><a href="index.php?p=mindmaps&amp;m=<?= h($k) ?>"<?= $k === $key ? ' class="on" aria-current="page"' : '' ?>>
-            <span><?= h($l) ?></span>
-            <small><?= $has ? h($b) : 'Coming soon' ?></small>
-          </a></li>
-        <?php endforeach; ?>
-      </ul>
-      <?php if ($map): ?>
-        <div class="mm-legend">
-          <p class="mm-side-head">Key</p>
-          <p><span class="mm-chip"></span> Page or menu</p>
-          <p><span class="mm-chip tab"></span> Tab inside a page</p>
-          <?php foreach (($map['statusLabels'] ?? []) as $s => $sl): ?>
-            <p><span class="mm-chip <?= h($s) ?>"></span> <?= h($sl) ?></p>
-          <?php endforeach; ?>
-        </div>
-      <?php endif; ?>
-    </aside>
     <section class="mm-main">
       <?php if (!$map): ?>
         <div class="card empty">
@@ -70,6 +49,13 @@ function mindmaps_screen(): void {
             <button type="button" class="small" data-mm="zoom-in" aria-label="Zoom in">+</button>
           </div>
         </div>
+        <p class="mm-legend small">
+          <span><span class="mm-chip"></span> Page or menu</span>
+          <span><span class="mm-chip tab"></span> Tab inside a page</span>
+          <?php foreach (($map['statusLabels'] ?? []) as $s => $sl): ?>
+            <span><span class="mm-chip <?= h($s) ?>"></span> <?= h($sl) ?></span>
+          <?php endforeach; ?>
+        </p>
         <div class="mm-body">
           <div class="mm-stage" id="mm-stage" tabindex="0" aria-label="Mind map. Click a box to open or close its branch."></div>
           <aside class="mm-detail card" id="mm-detail" aria-live="polite"><p class="muted small">Click any box to open its branch and see what it's for. Drag the background to move around.</p></aside>
